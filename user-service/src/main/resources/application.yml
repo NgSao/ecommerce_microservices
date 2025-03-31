@@ -1,0 +1,8 @@
+spring:
+  config:
+    import: optional:configserver:http://localhost:8888
+  application:
+    name: user-service
+jwt:
+  secret: mQz7qDcLZxpDCVh/2zyoxs6my1LOkppq7x/+SkOsO78j6U3MOlt06o4h5G3gH+M8QuneFwaMtlXT12L61n1lTg==
+
