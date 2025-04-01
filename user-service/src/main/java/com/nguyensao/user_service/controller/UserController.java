@@ -18,10 +18,17 @@ import com.nguyensao.user_service.service.UserService;
 import com.nguyensao.user_service.utils.GenerateOTP;
 import com.nguyensao.user_service.utils.GeneratePassword;
 import com.nguyensao.user_service.utils.JwtUtil;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,6 +38,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 
 @RestController
 @RequestMapping("/api/v1/users")
@@ -48,7 +56,7 @@ public class UserController {
         /**
          * 📌 1. API: Đăng ký tài khoản (chưa kích hoạt) +mã xác thực OTP qua email
          */
-        @PostMapping("/register")
+        @PostMapping("/public/register")
         @AppMessage("Đăng kí thành công, vui lòng kiểm tra email để kích hoạt tài khoản")
         public ResponseEntity<String> registerUser(@RequestBody UserRegisterRequest userDto) {
                 String verificationCode = GenerateOTP.generate();
@@ -68,7 +76,7 @@ public class UserController {
         /**
          * 📌 2. API: Tài khoản đã có (chưa kích hoạt) + mã xác thực mới OTP qua email.
          */
-        @PostMapping("/verify")
+        @PostMapping("/public/verify")
         @AppMessage("Vui lòng kiểm tra mã xác thực trong gamil.")
         public ResponseEntity<String> verifyActivateUser(@Valid @RequestBody EmailRequest request,
                         @CookieValue(value = "OTP", defaultValue = "") String cookieCode) {
@@ -90,12 +98,16 @@ public class UserController {
         /**
          * 📌 3. API: Xác thực OTP để kích hoạt tài khoản
          */
-        @PostMapping("/activate")
+        @PostMapping("/public/activate")
         @AppMessage("Kích hoạt tài khoản thành công.")
         public ResponseEntity<String> activateUser(@Valid @RequestBody OtpRequest request,
                         @CookieValue(value = "OTP", defaultValue = "") String cookieCode) {
                 String codeToken = jwtUtil.decodedToken(cookieCode);
-                String email = jwtUtil.decodedTokenClaim(cookieCode);
+                System.out.println("Email từ token: " + codeToken);
+
+                String email = jwtUtil.decodedTokenClaimEmail(cookieCode);
+                System.out.println("Email từ token: " + email);
+
                 userService.verifyOTP(email, request.getCode(), codeToken);
                 ResponseCookie cookie = ResponseCookie
                                 .from("OTP", null)
@@ -111,12 +123,12 @@ public class UserController {
         /**
          * 📌 4. API: Xác thực OTP để gửi mật khẩu mới về
          */
-        @PostMapping("/forgot-password")
+        @PostMapping("/public/forgot-password")
         @AppMessage("Vui lòng kiểm tra email để nhận mật khẩu mới.")
         public ResponseEntity<String> verifyPassword(@Valid @RequestBody OtpRequest request,
                         @CookieValue(value = "OTP", defaultValue = "") String cookieCode) {
                 String codeToken = jwtUtil.decodedToken(cookieCode);
-                String email = jwtUtil.decodedTokenClaim(cookieCode);
+                String email = jwtUtil.decodedTokenClaimEmail(cookieCode);
                 String newPassword = GeneratePassword.generate();
                 userService.forgotPassword(email, request.getCode(), codeToken, newPassword);
                 emailService.sendVerificationPassword(email, newPassword);
@@ -134,7 +146,7 @@ public class UserController {
         /**
          * 📌 5. API: Đăng nhập tài khoản
          */
-        @PostMapping("/login")
+        @PostMapping("/public/login")
         @AppMessage("Đăng nhập tài khoản thành công.")
         public ResponseEntity<UserLoginResponse> loginAuth(@Valid @RequestBody UserLoginRequest request) {
                 UserLoginResponse authResponse = userService.loginUser(request);
@@ -207,7 +219,8 @@ public class UserController {
          * 📌 8. API: Lấy người dùng bằng token
          */
         @GetMapping("/account")
-        public ResponseEntity<UserDto> getUserByToken(@CookieValue(name = "refreshToken") String tonKen) {
+        public ResponseEntity<UserDto> getUserByToken(
+                        @CookieValue(name = "refreshToken", defaultValue = "") String tonKen) {
                 return ResponseEntity.ok().body(userService.getUserByToken(tonKen));
         }
 
@@ -230,22 +243,103 @@ public class UserController {
         /**
          * 📌 11. API: Cập nhật tài khoản
          */
-        @PostMapping("/account/updated")
+        // @PostMapping("/account/updated")
+        // public ResponseEntity<UserDto> updateAccount(
+        // @RequestParam("file") MultipartFile file,
+        // @CookieValue(name = "refreshToken") String token,
+        // @RequestParam("fullname") String fullname,
+        // @RequestParam("birthday") Instant birthday,
+        // @RequestParam("gender") UserGender gender) {
+        // try {
+        // UserUpdateRequest userUpdateRequest = UserUpdateRequest.builder()
+        // .email(token)
+        // .fullname(fullname)
+        // .birthday(birthday)
+        // .gender(gender)
+        // .build();
+        // UserDto updatedUser = userService.updateAccount(file, userUpdateRequest);
+        // return ResponseEntity.ok().body(updatedUser);
+        // } catch (IOException e) {
+        // return ResponseEntity.status(500).body(null);
+        // } catch (AppException e) {
+        // return ResponseEntity.badRequest().build();
+        // }
+        // }@Operation(summary = "Cập nhật tài khoản", description = "Cho phép người
+        // dùng cập nhật thông tin cá nhân")
+
+        // @PostMapping(value = "/account/updated", consumes = "multipart/form-data")
+        // public ResponseEntity<UserDto> updateAccount(
+        // @RequestPart(value = "file", required = false) @Schema(type = "string",
+        // format = "binary") MultipartFile file,
+        // @RequestParam("fullname") String fullname,
+        // @RequestParam("birthday") @Schema(type = "string", format = "date", example =
+        // "2024-08-20") String birthdayString,
+        // @RequestParam("gender") UserGender gender) {
+        // try {
+        // // ✅ Chuyển đổi `birthdayString` thành `LocalDate`
+        // LocalDate birthday;
+        // try {
+        // birthday = LocalDate.parse(birthdayString, DateTimeFormatter.ISO_DATE);
+        // } catch (DateTimeParseException e) {
+        // return ResponseEntity.badRequest().body(null);
+        // }
+
+        // // ✅ Chuyển `LocalDate` sang `Instant`
+        // Instant birthdayInstant =
+        // birthday.atStartOfDay().toInstant(java.time.ZoneOffset.UTC);
+
+        // // ✅ Tạo request object
+        // UserUpdateRequest userUpdateRequest = UserUpdateRequest.builder()
+        // .fullname(fullname)
+        // .birthday(birthdayInstant)
+        // .gender(gender)
+        // .build();
+
+        // // ✅ Cập nhật thông tin người dùng
+        // UserDto updatedUser = userService.updateAccount(file, userUpdateRequest);
+        // return ResponseEntity.ok().body(updatedUser);
+
+        // } catch (IOException e) {
+        // return ResponseEntity.status(500).body(null);
+        // } catch (AppException e) {
+        // return ResponseEntity.badRequest().build();
+        // }
+        // }
+
+        @PostMapping(value = "/account/updated", consumes = "multipart/form-data")
+        @Operation(summary = "Cập nhật thông tin tài khoản người dùng", description = "Cập nhật thông tin người dùng bao gồm tên, ngày sinh, giới tính và hình ảnh")
         public ResponseEntity<UserDto> updateAccount(
-                        @RequestParam("file") MultipartFile file,
-                        @CookieValue(name = "refreshToken") String token,
-                        @RequestParam("fullname") String fullname,
-                        @RequestParam("birthday") Instant birthday,
-                        @RequestParam("gender") UserGender gender) {
+                        @RequestPart(value = "file", required = false) @Schema(type = "string", format = "binary") MultipartFile file,
+
+                        @RequestParam("fullname") @Schema(description = "Tên đầy đủ của người dùng") String fullname,
+
+                        @RequestParam("birthday") @Schema(type = "string", format = "date", example = "2024-08-20") String birthdayString,
+
+                        @RequestParam("gender") @Schema(description = "Giới tính của người dùng") UserGender gender) {
+
                 try {
+                        // Chuyển đổi `birthdayString` thành `LocalDate`
+                        LocalDate birthday;
+                        try {
+                                birthday = LocalDate.parse(birthdayString, DateTimeFormatter.ISO_DATE);
+                        } catch (DateTimeParseException e) {
+                                return ResponseEntity.badRequest().body(null);
+                        }
+
+                        // Chuyển `LocalDate` sang `Instant`
+                        Instant birthdayInstant = birthday.atStartOfDay().toInstant(java.time.ZoneOffset.UTC);
+
+                        // Tạo request object
                         UserUpdateRequest userUpdateRequest = UserUpdateRequest.builder()
-                                        .email(token)
                                         .fullname(fullname)
-                                        .birthday(birthday)
+                                        .birthday(birthdayInstant)
                                         .gender(gender)
                                         .build();
+
+                        // Cập nhật thông tin người dùng
                         UserDto updatedUser = userService.updateAccount(file, userUpdateRequest);
                         return ResponseEntity.ok().body(updatedUser);
+
                 } catch (IOException e) {
                         return ResponseEntity.status(500).body(null);
                 } catch (AppException e) {

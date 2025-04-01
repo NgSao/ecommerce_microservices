@@ -1,4 +1,4 @@
-package com.nguyensao.user_service.config;
+package com.nguyensao.product_service.config;
 
 import java.util.List;
 
@@ -16,7 +16,6 @@ import io.swagger.v3.oas.models.servers.Server;
 
 @Configuration
 public class OpenAPIConfig {
-
     // 🔹 Cấu hình Bearer Token
     private SecurityScheme createBearerScheme() {
         return new SecurityScheme()
@@ -63,7 +62,7 @@ public class OpenAPIConfig {
 
     private Info createApiInfo() {
         return new Info()
-                .title("User service")
+                .title("Product service")
                 .version("1.0")
                 .contact(createContact())
                 .description("This API exposes all endpoints (job hunter)")
@@ -76,7 +75,7 @@ public class OpenAPIConfig {
         return new OpenAPI()
                 .info(createApiInfo())
                 .servers(List.of(
-                        createServer("http://localhost:8081", "Server URL in Development environment"),
+                        createServer("http://localhost:8082", "Server URL in Development environment"),
                         createServer("https://ns.vn", "Server URL in Production environment")))
                 .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
                 .addSecurityItem(new SecurityRequirement().addList("Cookie RefreshToken"))

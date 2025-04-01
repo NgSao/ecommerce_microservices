@@ -19,7 +19,6 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserUpdateRequest {
-    String id;
     String fullname;
     String email;
     String profileImageUrl;

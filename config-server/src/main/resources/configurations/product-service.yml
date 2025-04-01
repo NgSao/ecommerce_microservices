@@ -16,7 +16,7 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
   application:
-    name: user-service
+    name: product-service
 
 eureka:
   instance:
@@ -31,3 +31,7 @@ springdoc:
     enabled: true
   swagger-ui:
     path: /swagger-ui.html
+
+# application:
+#   config:
+#     inventory-url: http://localhost:8080/api/v1/inventories

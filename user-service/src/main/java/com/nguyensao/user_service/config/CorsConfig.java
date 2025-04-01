@@ -14,7 +14,7 @@ public class CorsConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         // Cho phép các URL nào được truy cập API
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000"));
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:8081"));
 
         // Cho phép các method nào được truy cập API
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));

@@ -17,7 +17,6 @@ public class UserMapper {
 
     public User toUserUpdatedRequest(UserUpdateRequest request) {
         return User.builder()
-                .id(request.getId())
                 .fullname(request.getFullname())
                 .birthday(request.getBirthday())
                 .profileImageUrl(request.getProfileImageUrl())

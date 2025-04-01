@@ -2,6 +2,7 @@ package com.nguyensao.product_service.controller;
 
 import com.nguyensao.product_service.dto.CategoryDto;
 import com.nguyensao.product_service.dto.ProductDto;
+import com.nguyensao.product_service.exception.AppException;
 import com.nguyensao.product_service.service.CategoryService;
 import com.nguyensao.product_service.service.ProductService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -95,49 +97,71 @@ public class ProductController {
      * 📌 7. API: Tạo sản phẩm
      */
     @PostMapping("/admin/add")
-    public ResponseEntity<ProductDto> createProduct(@RequestBody ProductDto productDto) {
-        return ResponseEntity.ok(productService.createProduct(productDto));
+    public ResponseEntity<ProductDto> createProduct(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("name") String name,
+            @RequestParam("description") String description,
+            @RequestParam("price") BigDecimal price,
+            @RequestParam("categoryId") String categoryId
+
+    ) {
+        try {
+            ProductDto productDto = ProductDto.builder()
+                    .name(name)
+                    .description(description)
+                    .price(price)
+                    .categoryId(categoryId)
+                    .build();
+            return ResponseEntity.ok(productService.createProduct(file, productDto));
+        } catch (IOException e) {
+            return ResponseEntity.status(500).body(null);
+        } catch (AppException e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
-    /**
-     * 📌 8. API: Cập nhật sản phẩm + kiểm tra còn hàng không
-     */
-    @PutMapping("/admin/update")
-    public ResponseEntity<ProductDto> updateProduct(@RequestBody ProductDto productDto) {
-        return ResponseEntity.ok(productService.updateProduct(productDto));
-    }
+    // /**
+    // * 📌 8. API: Cập nhật sản phẩm + kiểm tra còn hàng không
+    // */
+    // @PutMapping("/admin/update")
+    // public ResponseEntity<ProductDto> updateProduct(@RequestBody ProductDto
+    // productDto) {
+    // return ResponseEntity.ok(productService.updateProduct(productDto));
+    // }
 
-    /**
-     * 📌 9. API: Lấy sản phẩm theo id
-     */
-    @GetMapping("/admin/{id}")
-    public ResponseEntity<ProductDto> getProductById(@PathVariable String id) {
-        return ResponseEntity.ok(productService.getProductById(id));
-    }
+    // /**
+    // * 📌 9. API: Lấy sản phẩm theo id
+    // */
+    // @GetMapping("/admin/{id}")
+    // public ResponseEntity<ProductDto> getProductById(@PathVariable String id) {
+    // return ResponseEntity.ok(productService.getProductById(id));
+    // }
 
-    /**
-     * 📌 10. API: Xóa sản phẩm + kiểm tra có đơn hàng chưa
-     */
-    @DeleteMapping("/admin/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable String id) {
-        productService.deleteProduct(id);
-        return ResponseEntity.ok().build();
-    }
+    // /**
+    // * 📌 10. API: Xóa sản phẩm + kiểm tra có đơn hàng chưa
+    // */
+    // @DeleteMapping("/admin/{id}")
+    // public ResponseEntity<Void> deleteProduct(@PathVariable String id) {
+    // productService.deleteProduct(id);
+    // return ResponseEntity.ok().build();
+    // }
 
-    /**
-     * 📌 11. API: Kiểm tra sản phẩm còn hàng không
-     */
-    @GetMapping("/admin/inventory")
-    public ResponseEntity<Boolean> checkProductStock(@RequestParam String productId) {
-        return ResponseEntity.ok(productService.checkProductStock(productId));
-    }
+    // /**
+    // * 📌 11. API: Kiểm tra sản phẩm còn hàng không
+    // */
+    // @GetMapping("/admin/inventory")
+    // public ResponseEntity<Boolean> checkProductStock(@RequestParam String
+    // productId) {
+    // return ResponseEntity.ok(productService.checkProductStock(productId));
+    // }
 
-    /**
-     * 📌 12. API: Cập nhật trạng thái sản phẩm
-     */
-    @PatchMapping("/admin/active")
-    public ResponseEntity<Void> toggleProductStatus(@RequestParam String productId) {
-        productService.toggleProductStatus(productId);
-        return ResponseEntity.ok().build();
-    }
+    // /**
+    // * 📌 12. API: Cập nhật trạng thái sản phẩm
+    // */
+    // @PatchMapping("/admin/active")
+    // public ResponseEntity<Void> toggleProductStatus(@RequestParam String
+    // productId) {
+    // productService.toggleProductStatus(productId);
+    // return ResponseEntity.ok().build();
+    // }
 }

@@ -14,6 +14,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -179,25 +180,53 @@ public class UserService {
 
     // 11.
     public UserDto updateAccount(MultipartFile file, UserUpdateRequest request) throws IOException {
-        String email = jwtUtil.decodedToken(request.getEmail());
-        User user = checkUserByEmail(email);
-        GitHub github = GitHub.connectUsingOAuth(GithubConstant.GITHUB_TOKEN);
-        GHRepository repository = github.getRepository(GithubConstant.REPO_NAME);
-        String timestamp = String.valueOf(System.currentTimeMillis());
-        String imagePath = "microservice/users/" + timestamp + "_" + file.getOriginalFilename();
-        if (!FileValidation.isValidImage(file)) {
-            throw new AppException("Chỉ chấp nhận file JPG, PNG, JPEG, GIF!");
+        // ✅ Kiểm tra người dùng theo email
+
+        // ✅ Lấy email từ JWT token
+        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String token = jwt.getSubject();
+        User user = checkUserByEmail(token);
+        if (user == null) {
+            throw new AppException("User not found");
         }
-        repository.createContent()
-                .content(file.getBytes())
-                .path(imagePath)
-                .message("Tải ảnh người dùng: " + file.getOriginalFilename())
-                .branch(GithubConstant.BRANCH)
-                .commit();
-        String imageUrl = "https://raw.githubusercontent.com/" + GithubConstant.REPO_NAME + "/" + GithubConstant.BRANCH
-                + "/" + imagePath;
-        mapper.toUserUpdatedRequest(request);
-        user.setProfileImageUrl(imageUrl);
+
+        // ✅ Nếu có file, tải ảnh lên GitHub
+        String imageUrl = null;
+        if (file != null) {
+            GitHub github = GitHub.connectUsingOAuth(GithubConstant.GITHUB_TOKEN);
+            GHRepository repository = github.getRepository(GithubConstant.REPO_NAME);
+            String timestamp = String.valueOf(System.currentTimeMillis());
+            String imagePath = "microservice/users/" + timestamp + "_" + file.getOriginalFilename();
+
+            // ✅ Kiểm tra file có hợp lệ không
+            if (!FileValidation.isValidImage(file)) {
+                throw new AppException("Chỉ chấp nhận file JPG, PNG, JPEG, GIF!");
+            }
+
+            // ✅ Tải ảnh lên GitHub
+            repository.createContent()
+                    .content(file.getBytes())
+                    .path(imagePath)
+                    .message("Tải ảnh người dùng: " + file.getOriginalFilename())
+                    .branch(GithubConstant.BRANCH)
+                    .commit();
+
+            imageUrl = "https://raw.githubusercontent.com/" + GithubConstant.REPO_NAME + "/" + GithubConstant.BRANCH
+                    + "/" + imagePath;
+        }
+
+        user.setFullname(request.getFullname());
+        user.setBirthday(request.getBirthday());
+        user.setGender(request.getGender());
+
+        if (imageUrl != null) {
+            user.setProfileImageUrl(imageUrl);
+        }
+
+        // ✅ Lưu lại thông tin người dùng
+        userRepository.save(user);
+
+        // ✅ Trả về DTO của người dùng
         return mapper.userToDto(user);
     }
 

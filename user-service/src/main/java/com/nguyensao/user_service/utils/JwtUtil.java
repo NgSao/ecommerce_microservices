@@ -121,10 +121,10 @@ public class JwtUtil {
     /**
      * Giải mã token để lấy claim
      */
-    public String decodedTokenClaim(String claim) {
+    public String decodedTokenClaimEmail(String token) {
         try {
-            Jwt decodedJwt = jwtDecoder.decode(claim);
-            return decodedJwt.getClaimAsString(claim);
+            Jwt decodedJwt = jwtDecoder.decode(token);
+            return decodedJwt.getClaimAsString("email");
         } catch (JwtException e) {
             System.out.println(">>> Lỗi khi giải mã token: " + e.getMessage());
             return null;
