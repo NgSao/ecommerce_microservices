@@ -10,6 +10,6 @@ import lombok.Setter;
 public class UserLoginResponse {
     @JsonProperty("access_token")
     private String accessToken;
-
     private String email;
+
 }

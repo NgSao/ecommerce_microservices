@@ -32,15 +32,18 @@ public class SecurityConfiguration {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity,
-            CustomAuthenticationEntryPoint customAuthenticationEntryPoint) throws Exception {
+            CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
+            CustomAccessDeniedHandler customAccessDeniedHandler) throws Exception {
         httpSecurity
                 .csrf(c -> c.disable())
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(SecurityConstant.ADMIN_URLS).hasAnyAuthority("ROLE_ADMIN", "ROLE_STAFF")
                         .requestMatchers(SecurityConstant.PUBLIC_URLS).permitAll()
                         .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
-                        .authenticationEntryPoint(customAuthenticationEntryPoint))
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                        .accessDeniedHandler(customAccessDeniedHandler))
                 .formLogin(f -> f.disable())
 
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

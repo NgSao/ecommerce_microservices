@@ -3,6 +3,12 @@ spring:
     import: optional:configserver:http://localhost:8888
   application:
     name: user-service
+  data:
+    web:
+      pageable:
+        default-page-size: 10
+        max-page-size: 100
+        default-page-number: 0
 jwt:
   secret: mQz7qDcLZxpDCVh/2zyoxs6my1LOkppq7x/+SkOsO78j6U3MOlt06o4h5G3gH+M8QuneFwaMtlXT12L61n1lTg==
 

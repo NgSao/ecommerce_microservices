@@ -21,10 +21,15 @@ import org.springframework.web.multipart.MultipartFile;
 import com.nguyensao.user_service.constant.GithubConstant;
 import com.nguyensao.user_service.dto.AddressDto;
 import com.nguyensao.user_service.dto.UserDto;
+import com.nguyensao.user_service.dto.request.AddressCreateRequest;
+import com.nguyensao.user_service.dto.request.AddressUpdateRequest;
 import com.nguyensao.user_service.dto.request.ResetPasswordRequest;
+import com.nguyensao.user_service.dto.request.RoleChangeRequest;
+import com.nguyensao.user_service.dto.request.StatusChangeRequest;
 import com.nguyensao.user_service.dto.request.UserLoginRequest;
 import com.nguyensao.user_service.dto.request.UserRegisterRequest;
 import com.nguyensao.user_service.dto.request.UserUpdateRequest;
+import com.nguyensao.user_service.dto.response.UserCustomerResponse;
 import com.nguyensao.user_service.dto.response.UserLoginResponse;
 import com.nguyensao.user_service.enums.RoleAuthorities;
 import com.nguyensao.user_service.enums.UserStatus;
@@ -36,6 +41,7 @@ import com.nguyensao.user_service.repository.AddressRepository;
 import com.nguyensao.user_service.repository.UserRepository;
 import com.nguyensao.user_service.utils.FileValidation;
 import com.nguyensao.user_service.utils.JwtUtil;
+import com.nguyensao.user_service.utils.PasswordValidator;
 
 @Service
 public class UserService {
@@ -65,10 +71,22 @@ public class UserService {
     // 1. Đăng kí tài khoản chưa kích hoạt
     public void registerUser(UserRegisterRequest userDto, String verificationCode) {
         validateEmailRegister(userDto.getEmail());
-        User user = mapper.toUserRegisterRequest(userDto);
-        user.setPassword(passwordEncoder.encode(userDto.getPassword()));
-        user.setStatus(UserStatus.INACTIVE);
-        user.setRole(RoleAuthorities.USER);
+        if (!PasswordValidator.isStrongPassword(userDto.getPassword())) {
+            throw new AppException(
+                    "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.");
+        }
+
+        if (!userDto.getPassword().equals(userDto.getPasswordAgain())) {
+            throw new AppException("Mật khẩu và xác nhận mật khẩu không khớp.");
+        }
+        User user = User.builder()
+                .fullname(userDto.getFullname())
+                .email(userDto.getEmail())
+                .password(passwordEncoder.encode(userDto.getPassword()))
+                .status(UserStatus.INACTIVE)
+                .role(RoleAuthorities.CUSTOMER)
+                .build();
+
         userRepository.save(user);
     }
 
@@ -81,7 +99,7 @@ public class UserService {
             throw new AppException("Không tim thấy mã OTP.");
         }
         if (cookieCode.equals(code)) {
-            User existingUser = checkUserByEmail(email);
+            User existingUser = checkUserByEmailNotActive(email);
             existingUser.setStatus(UserStatus.ACTIVE);
             userRepository.save(existingUser);
         } else {
@@ -100,7 +118,7 @@ public class UserService {
             throw new AppException("Không tim thấy mã OTP.");
         }
         if (cookieCode.equals(code)) {
-            User existingUser = checkUserByEmail(email);
+            User existingUser = checkUserByEmailNotActive(email);
             existingUser.setPassword(passwordEncoder.encode(newPassword));
             userRepository.save(existingUser);
         } else {
@@ -121,22 +139,55 @@ public class UserService {
                         "Tài khoản đã tồn tại nhưng chưa được kích hoạt. Vui lòng kiểm tra email để kích hoạt hoặc yêu cầu gửi lại OTP.");
             }
             if (user.getStatus() == UserStatus.BLOCKED) {
-                throw new AppException("Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ để được trợ giúp.");
+                throw new AppException("Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ.");
             }
             throw new AppException("Email đã được sử dụng. Vui lòng chọn email khác.");
         }
     }
 
+    // CheckEmail ch kích hoạt
+    public User checkUserByEmailNotActive(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException("Email không tồn tại"));
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new AppException("Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ.");
+        }
+
+        return user;
+    }
+
     // Check Email có trả về
     public User checkUserByEmail(String email) {
-        return userRepository.findByEmail(email).orElseThrow(() -> new AppException("Email không tồn tại"));
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException("Email không tồn tại"));
+
+        if (user.getStatus() == UserStatus.INACTIVE) {
+            throw new AppException("Tài khoản chưa được xác thực.");
+        }
+
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new AppException("Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ.");
+        }
+
+        return user;
     }
 
     // Check Email k trả về
     public void checkExistsEmail(String email) {
-        if (!userRepository.existsByEmail(email)) {
-            throw new AppException("Email không tồn tại");
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException("Email không tồn tại"));
+
+        if (user.getStatus() == UserStatus.ACTIVE) {
+            throw new AppException("Tài khoản đã được xác thực trước đó.");
         }
+        if (user.getStatus() == UserStatus.BLOCKED) {
+            throw new AppException("Tài khoản đã bị khóa. Vui lòng liên hệ hỗ trợ.");
+        }
+    }
+
+    // Check uuid
+    public User findUserById(String uuid) {
+        return userRepository.findById(uuid).orElseThrow(() -> new AppException("UUID không tồn tại"));
     }
 
     // 5.Login
@@ -150,6 +201,7 @@ public class UserService {
         UserLoginResponse userLoginResponse = new UserLoginResponse();
         userLoginResponse.setAccessToken(access_token);
         userLoginResponse.setEmail(request.getEmail());
+
         return userLoginResponse;
     }
 
@@ -160,37 +212,27 @@ public class UserService {
 
     // ------------------------
     // 8
-    public UserDto getUserByToken(String token) {
-        String email = jwtUtil.decodedToken(token);
-        User user = checkUserByEmail(email);
-        return mapper.userToDto(user);
+    public UserCustomerResponse getUserByToken() {
+        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String uuid = jwt.getClaimAsString("uuid");
+        User user = findUserById(uuid);
+        return mapper.toUserCustomerResponse(user);
     }
 
     // 9.
-    public UserDto getUserByEmail(String email) {
+    public UserCustomerResponse getUserByEmail(String email) {
         User user = checkUserByEmail(email);
-        return mapper.userToDto(user);
-    }
-
-    // 10.
-    public UserDto getUserById(String id) {
-        User user = userRepository.findById(id).orElseThrow(() -> new AppException("Id không tồn tại"));
-        return mapper.userToDto(user);
+        return mapper.toUserCustomerResponse(user);
     }
 
     // 11.
-    public UserDto updateAccount(MultipartFile file, UserUpdateRequest request) throws IOException {
-        // ✅ Kiểm tra người dùng theo email
-
-        // ✅ Lấy email từ JWT token
+    public UserCustomerResponse updateAccount(MultipartFile file, UserUpdateRequest request) throws IOException {
         Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         String token = jwt.getSubject();
         User user = checkUserByEmail(token);
         if (user == null) {
             throw new AppException("User not found");
         }
-
-        // ✅ Nếu có file, tải ảnh lên GitHub
         String imageUrl = null;
         if (file != null) {
             GitHub github = GitHub.connectUsingOAuth(GithubConstant.GITHUB_TOKEN);
@@ -198,12 +240,10 @@ public class UserService {
             String timestamp = String.valueOf(System.currentTimeMillis());
             String imagePath = "microservice/users/" + timestamp + "_" + file.getOriginalFilename();
 
-            // ✅ Kiểm tra file có hợp lệ không
             if (!FileValidation.isValidImage(file)) {
                 throw new AppException("Chỉ chấp nhận file JPG, PNG, JPEG, GIF!");
             }
 
-            // ✅ Tải ảnh lên GitHub
             repository.createContent()
                     .content(file.getBytes())
                     .path(imagePath)
@@ -222,38 +262,69 @@ public class UserService {
         if (imageUrl != null) {
             user.setProfileImageUrl(imageUrl);
         }
-
-        // ✅ Lưu lại thông tin người dùng
         userRepository.save(user);
-
-        // ✅ Trả về DTO của người dùng
-        return mapper.userToDto(user);
+        return mapper.toUserCustomerResponse(user);
     }
 
     // 12
-    public void resetPassword(String token, ResetPasswordRequest request) {
-        String email = jwtUtil.decodedToken(token);
+    public void resetPassword(ResetPasswordRequest request) {
+        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String email = jwt.getSubject();
         User user = checkUserByEmail(email);
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
+            throw new AppException("Mật khẩu cũ không chính xác.");
+        }
+
+        if (!PasswordValidator.isStrongPassword(request.getNewPassword())) {
+            throw new AppException(
+                    "Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường, số và ký tự đặc biệt.");
+        }
+
+        if (passwordEncoder.matches(request.getNewPassword(), user.getPassword())) {
+            throw new AppException("Mật khẩu mới không được trùng với mật khẩu cũ.");
+        }
+
+        if (!request.getNewPassword().equals(request.getConfirmNewPassword())) {
+            throw new AppException("Mật khẩu mới không khớp.");
+        }
+
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+
         emailService.sendPasswordResetConfirmation(email);
     }
 
     // 13
-    public AddressDto createAddress(String token, AddressDto dto) {
-        String email = jwtUtil.decodedToken(token);
-        User user = checkUserByEmail(email);
-        Address address = mapper.addressToEntity(dto);
+    public AddressDto createAddress(AddressCreateRequest addressCreateRequest) {
+        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String uuid = jwt.getClaimAsString("uuid");
+        User user = findUserById(uuid);
+        Address address = mapper.toAddressCreateRequest(addressCreateRequest);
         address.setUser(user);
-        address.setActive(true);
+        if (Boolean.TRUE.equals(addressCreateRequest.getActive())) {
+            user.getAddresses().forEach(a -> a.setActive(false));
+            address.setActive(true);
+        }
+
         addressRepository.save(address);
         return mapper.addressToDto(address);
     }
 
+    public Page<AddressDto> getAllAddress(Pageable pageable) {
+        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String uuid = jwt.getClaimAsString("uuid");
+        Page<Address> addressPage = addressRepository.findAllByUserId(uuid, pageable);
+
+        return addressPage.map(mapper::addressToDto);
+
+    }
+
     // 14
-    public void changeAddressStatus(String token, String addressId) {
-        String email = jwtUtil.decodedToken(token);
-        User user = checkUserByEmail(email);
+    public void changeAddressStatus(String addressId) {
+        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String uuid = jwt.getClaimAsString("uuid");
+        User user = findUserById(uuid);
 
         Address selectedAddress = addressRepository.findById(addressId)
                 .orElseThrow(() -> new AppException("Address not found"));
@@ -268,32 +339,38 @@ public class UserService {
     }
 
     // 15
-    public AddressDto updateAddress(String token, AddressDto addressDto) {
-        String email = jwtUtil.decodedToken(token);
-        User user = checkUserByEmail(email);
-        Address address = addressRepository.findById(addressDto.getId())
-                .orElseThrow(() -> new RuntimeException("Address not found"));
+    public AddressDto updateAddress(AddressUpdateRequest addressDto) {
+        // Lấy thông tin người dùng từ JWT
+        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String uuid = jwt.getClaimAsString("uuid");
+        User user = findUserById(uuid);
 
-        if (!address.getUser().getId().equals(user.getId())) {
-            throw new RuntimeException("Address does not belong to the user");
+        // Tìm địa chỉ cần cập nhật
+        Address address = addressRepository.findById(addressDto.getId())
+                .orElseThrow(() -> new AppException("Address not found"));
+
+        // Kiểm tra xem địa chỉ có phải của người dùng hiện tại không
+        if (address.getUser() == null || !address.getUser().getId().equals(user.getId())) {
+            throw new AppException("Address does not belong to the user or user not linked");
         }
 
-        mapper.addressToEntity(addressDto);
-        if (addressDto.getActive() != null && addressDto.getActive()) {
+        address = mapper.toAddresUpdatedRequest(addressDto, user);
+
+        if (Boolean.TRUE.equals(addressDto.getActive())) {
             user.getAddresses().forEach(a -> a.setActive(false));
             address.setActive(true);
         }
 
-        addressRepository.saveAll(user.getAddresses());
+        addressRepository.save(address);
 
-        // Trả về dữ liệu sau khi cập nhật
         return mapper.addressToDto(address);
     }
 
     // 16
-    public void deleteAddress(String token, String addressId) {
-        String email = jwtUtil.decodedToken(token);
-        User user = checkUserByEmail(email);
+    public void deleteAddress(String addressId) {
+        Jwt jwt = (Jwt) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        String uuid = jwt.getClaimAsString("uuid");
+        User user = findUserById(uuid);
         Address address = addressRepository.findById(addressId)
                 .orElseThrow(() -> new AppException("Address not found"));
         if (!address.getUser().getId().equals(user.getId())) {
@@ -307,24 +384,24 @@ public class UserService {
         validateEmailRegister(userDto.getEmail());
         User user = mapper.userToEntity(userDto);
         user.setPassword(passwordEncoder.encode(userDto.getPassword()));
-        user.setStatus(UserStatus.INACTIVE);
-        user.setRole(RoleAuthorities.USER);
         userRepository.save(user);
         return mapper.userToDto(user);
     }
 
     // 18
-    public void changeRole(UserDto reques) {
-        User user = userRepository.findById(reques.getId()).orElseThrow(() -> new AppException("User not found"));
-        user.setRole(reques.getRole());
+    public void changeRole(RoleChangeRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new AppException("User not found"));
+        user.setRole(request.getRoleAuthorities());
         userRepository.save(user);
 
     }
 
     // 19
-    public void changeStatus(UserDto dto) {
-        User user = userRepository.findById(dto.getId()).orElseThrow(() -> new AppException("User not found"));
-        user.setStatus(dto.getStatus());
+    public void changeStatus(StatusChangeRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new AppException("User not found"));
+        user.setStatus(request.getStatus());
         userRepository.save(user);
     }
 
@@ -334,8 +411,10 @@ public class UserService {
     }
 
     // 21
-    public void deleteUser(String id) {
-        userRepository.deleteById(id);
+    public void deleteUser(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException("User not found"));
+        userRepository.deleteById(user.getId());
     }
 
 }

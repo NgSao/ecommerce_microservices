@@ -1,4 +1,4 @@
-package com.nguyensao.user_service.dto;
+package com.nguyensao.user_service.dto.request;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -14,7 +14,7 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class AddressDto {
+public class AddressUpdateRequest {
     String id;
     String fullname;
     String phone;
@@ -23,5 +23,4 @@ public class AddressDto {
     String street;
     String addressDetail;
     Boolean active;
-
 }

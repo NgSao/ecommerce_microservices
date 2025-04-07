@@ -50,6 +50,7 @@ public class JwtUtil {
                 .issuedAt(now)
                 .expiresAt(validity)
                 .subject(email)
+                .claim("uuid", user.getId())
                 .claim("role", user.getRole())
                 .build();
         JwsHeader jwsHeader = JwsHeader.with(SecurityConstant.JWT_ALGORITHM).build();
@@ -67,6 +68,7 @@ public class JwtUtil {
                 .issuedAt(now)
                 .expiresAt(validity)
                 .subject(email)
+                .claim("uuid", user.getId())
                 .claim("role", user.getRole())
                 .build();
         JwsHeader jwsHeader = JwsHeader.with(SecurityConstant.JWT_ALGORITHM).build();

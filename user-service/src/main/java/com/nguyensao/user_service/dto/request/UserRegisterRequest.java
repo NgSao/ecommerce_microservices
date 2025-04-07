@@ -1,8 +1,7 @@
 package com.nguyensao.user_service.dto.request;
 
-import com.nguyensao.user_service.enums.RoleAuthorities;
-import com.nguyensao.user_service.enums.UserStatus;
-
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -19,15 +18,20 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserRegisterRequest {
-    @NotBlank(message = "Fullname is required")
+    @NotBlank(message = "Họ và tên không được bỏ trống")
+    @Schema(description = "Họ và tên của người dùng", example = "Nguyễn Văn A")
     String fullname;
 
-    @NotBlank(message = "Email is required")
+    @NotBlank(message = "Email không được bỏ trống")
+    @Email(message = "Email không hợp lệ")
+    @Schema(description = "Địa chỉ email của người dùng", example = "nguyensaobe.java@gmail.com")
     String email;
 
-    @NotBlank(message = "Password is required")
+    @NotBlank(message = "Mật khẩu không được bỏ trống")
+    @Schema(description = "Mật khẩu của tài khoản", example = "Password@123")
     String password;
 
-    RoleAuthorities role;
-    UserStatus status;
+    @NotBlank(message = "Xác nhận mật khẩu không được bỏ trống")
+    @Schema(description = "Nhập lại mật khẩu để xác nhận", example = "Password@123")
+    String passwordAgain;
 }

@@ -32,7 +32,7 @@ public class EmailService {
                     + "<p style='font-size: 16px;'>Mã xác thực của bạn là: <strong style='font-size: 20px; color: #FF5722;'>"
                     + code + "</strong></p>"
                     + "<p style='font-size: 14px;'>Mã này sẽ hết hạn sau " + otpTokenExpirationNew
-                    + "phút. Vui lòng nhập mã trong thời gian quy định.</p>"
+                    + " phút. Vui lòng nhập mã trong thời gian quy định.</p>"
                     + "<hr>"
                     + "<p style='font-size: 12px; color: #888;'>Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này.</p>"
                     + "</body></html>";
@@ -53,8 +53,8 @@ public class EmailService {
             helper.setSubject("Cập nhật mật khẩu mới");
             String htmlContent = "<html><body>"
                     + "<h2 style='color: #4CAF50;'>Mật khẩu mới của bạn</h2>"
-                    + "<p style='font-size: 16px;'>Mật khẩu mới của bạn là: <strong style='font-size: 20px; color: #FF5722;'>"
-                    + newPassword + "</strong></p>"
+                    + "<p style='font-size: 16px;'>Mật khẩu mới của bạn là: <strong style='font-size: 20px; color: #FF5722;'> "
+                    + newPassword + " </strong></p>"
                     + "<p style='font-size: 14px;'>Vui lòn đổi mã pin mới để an toàn hơn.</p>"
                     + "<hr>"
                     + "<p style='font-size: 12px; color: #888;'>Nếu bạn không thực hiện yêu cầu này, vui lòng bỏ qua email này.</p>"

@@ -7,8 +7,11 @@ import org.springframework.stereotype.Component;
 
 import com.nguyensao.user_service.dto.AddressDto;
 import com.nguyensao.user_service.dto.UserDto;
+import com.nguyensao.user_service.dto.request.AddressCreateRequest;
+import com.nguyensao.user_service.dto.request.AddressUpdateRequest;
 import com.nguyensao.user_service.dto.request.UserRegisterRequest;
 import com.nguyensao.user_service.dto.request.UserUpdateRequest;
+import com.nguyensao.user_service.dto.response.UserCustomerResponse;
 import com.nguyensao.user_service.model.Address;
 import com.nguyensao.user_service.model.User;
 
@@ -29,8 +32,19 @@ public class UserMapper {
                 .fullname(request.getFullname())
                 .email(request.getEmail())
                 .password(request.getPassword())
-                .role(request.getRole())
-                .status(request.getStatus())
+                .build();
+    }
+
+    public UserCustomerResponse toUserCustomerResponse(User user) {
+        if (user == null)
+            return null;
+        return UserCustomerResponse.builder()
+                .fullname(user.getFullname())
+                .email(user.getEmail())
+                .profileImageUrl(user.getProfileImageUrl())
+                .role(user.getRole())
+                .status(user.getStatus())
+                .createdAt(user.getCreatedAt())
                 .build();
     }
 
@@ -41,12 +55,14 @@ public class UserMapper {
                 .id(user.getId())
                 .fullname(user.getFullname())
                 .email(user.getEmail())
+                .password(user.getPassword())
                 .profileImageUrl(user.getProfileImageUrl())
                 .birthday(user.getBirthday())
                 .gender(user.getGender())
                 .role(user.getRole())
                 .status(user.getStatus())
                 .createdAt(user.getCreatedAt())
+                .createdBy(user.getCreatedBy())
                 .build();
     }
 
@@ -83,24 +99,47 @@ public class UserMapper {
                 .street(address.getStreet())
                 .addressDetail(address.getAddressDetail())
                 .active(address.getActive())
-                .email(address.getUser() != null ? address.getUser().getEmail() : null)
                 .build();
     }
 
-    public Address addressToEntity(AddressDto dto) {
+    public Address toAddressCreateRequest(AddressCreateRequest dto) {
         if (dto == null)
             return null;
-
         return Address.builder()
-                .id(dto.getId())
                 .fullname(dto.getFullname())
                 .phone(dto.getPhone())
                 .city(dto.getCity())
                 .district(dto.getDistrict())
                 .street(dto.getStreet())
                 .addressDetail(dto.getAddressDetail())
-                .active(dto.getActive())
+                .active(dto.getActive() != null ? dto.getActive() : false)
                 .build();
+    }
+
+    public Address toAddresUpdatedRequest(AddressUpdateRequest dto, User user) {
+        if (dto == null)
+            return null;
+
+        Address address = new Address();
+
+        address.setId(dto.getId());
+        if (dto.getFullname() != null)
+            address.setFullname(dto.getFullname());
+        if (dto.getPhone() != null)
+            address.setPhone(dto.getPhone());
+        if (dto.getCity() != null)
+            address.setCity(dto.getCity());
+        if (dto.getDistrict() != null)
+            address.setDistrict(dto.getDistrict());
+        if (dto.getStreet() != null)
+            address.setStreet(dto.getStreet());
+        if (dto.getAddressDetail() != null)
+            address.setAddressDetail(dto.getAddressDetail());
+        if (dto.getActive() != null)
+            address.setActive(dto.getActive());
+        address.setUser(user);
+
+        return address;
     }
 
     public List<AddressDto> addressToDtoList(List<Address> addresses) {
