@@ -2,7 +2,7 @@ server:
   port: 8082
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/productserverdb?createDatabaseIfNotExist=true
+    url: jdbc:mysql://localhost:3306/productservice?createDatabaseIfNotExist=true
     username: root  
     password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -32,6 +32,8 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
-# application:
-#   config:
-#     inventory-url: http://localhost:8080/api/v1/inventories
+application:
+  config:
+    attribute-url: http://localhost:8083
+jwt:
+  secret: mQz7qDcLZxpDCVh/2zyoxs6my1LOkppq7x/+SkOsO78j6U3MOlt06o4h5G3gH+M8QuneFwaMtlXT12L61n1lTg==

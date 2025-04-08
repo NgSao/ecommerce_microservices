@@ -24,22 +24,6 @@ public class OpenAPIConfig {
                 .bearerFormat("JWT");
     }
 
-    // 🔹 Cấu hình Cookie Authentication cho refreshToken
-    private SecurityScheme createRefreshTokenScheme() {
-        return new SecurityScheme()
-                .type(SecurityScheme.Type.APIKEY)
-                .in(SecurityScheme.In.COOKIE)
-                .name("refreshToken"); // Tên cookie chứa refresh token
-    }
-
-    // 🔹 Cấu hình Cookie Authentication cho OTP
-    private SecurityScheme createOtpScheme() {
-        return new SecurityScheme()
-                .type(SecurityScheme.Type.APIKEY)
-                .in(SecurityScheme.In.COOKIE)
-                .name("OTP"); // Tên cookie chứa OTP token
-    }
-
     private Server createServer(String url, String description) {
         Server server = new Server();
         server.setUrl(url);
@@ -65,7 +49,7 @@ public class OpenAPIConfig {
                 .title("Product service")
                 .version("1.0")
                 .contact(createContact())
-                .description("This API exposes all endpoints (job hunter)")
+                .description("This API exposes all endpoints User")
                 .termsOfService("https://ns.vn/donate")
                 .license(createLicense());
     }
@@ -75,14 +59,9 @@ public class OpenAPIConfig {
         return new OpenAPI()
                 .info(createApiInfo())
                 .servers(List.of(
-                        createServer("http://localhost:8082", "Server URL in Development environment"),
-                        createServer("https://ns.vn", "Server URL in Production environment")))
+                        createServer("http://localhost:8082", "Server URL in Products environment")))
                 .addSecurityItem(new SecurityRequirement().addList("Bearer Authentication"))
-                .addSecurityItem(new SecurityRequirement().addList("Cookie RefreshToken"))
-                .addSecurityItem(new SecurityRequirement().addList("Cookie OTP"))
-                .components(new Components()
-                        .addSecuritySchemes("Bearer Authentication", createBearerScheme())
-                        .addSecuritySchemes("Cookie RefreshToken", createRefreshTokenScheme())
-                        .addSecuritySchemes("Cookie OTP", createOtpScheme()));
+                .components(new Components().addSecuritySchemes("Bearer Authentication", createBearerScheme()));
     }
+
 }

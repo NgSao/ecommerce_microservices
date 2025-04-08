@@ -21,6 +21,7 @@ import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import com.nguyensao.user_service.constant.SecurityConstant;
+import com.nguyensao.user_service.service.TokenBlacklistService;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.util.Base64;
 
@@ -33,7 +34,8 @@ public class SecurityConfiguration {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity,
             CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
-            CustomAccessDeniedHandler customAccessDeniedHandler) throws Exception {
+            CustomAccessDeniedHandler customAccessDeniedHandler,
+            TokenBlacklistService tokenBlacklistService) throws Exception {
         httpSecurity
                 .csrf(c -> c.disable())
                 .authorizeHttpRequests(auth -> auth
@@ -44,6 +46,8 @@ public class SecurityConfiguration {
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
                         .authenticationEntryPoint(customAuthenticationEntryPoint)
                         .accessDeniedHandler(customAccessDeniedHandler))
+                // .addFilterBefore(new JwtBlacklistFilter(tokenBlacklistService),
+                // BearerTokenAuthenticationFilter.class)
                 .formLogin(f -> f.disable())
 
                 .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));

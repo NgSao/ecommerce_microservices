@@ -1,29 +1,35 @@
 package com.nguyensao.product_service.dto;
 
+import lombok.Data;
+
 import java.math.BigDecimal;
-
-import lombok.AccessLevel;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.experimental.FieldDefaults;
 
-@Getter
-@Setter
-@AllArgsConstructor
+@Data
 @NoArgsConstructor
-@Builder
-@FieldDefaults(level = AccessLevel.PRIVATE)
+@AllArgsConstructor
 public class ProductDto {
-
-    String id;
-    String name;
-    String imageUrl;
-    String description;
-    BigDecimal price;
-    Boolean stock;
-    Boolean active;
-    String categoryId;
+    private Long id;
+    private String name;
+    private String shortDescription;
+    private String description;
+    private String sku;
+    private BigDecimal price;
+    private BigDecimal oldPrice;
+    private BigDecimal specialPrice;
+    private boolean isPublished;
+    private Long brandId;
+    private String brandName;
+    private Long parentId;
+    private Set<Long> categoryIds = new HashSet<>();
+    private List<CategoryDto> categories = new ArrayList<>();
+    private List<ProductImageDto> images = new ArrayList<>();
+    private List<AttributeValueDto> attributeValues = new ArrayList<>();
+    private List<OptionCombinationDto> optionCombinations = new ArrayList<>();
+    private List<Long> relatedProductIds = new ArrayList<>();
 }

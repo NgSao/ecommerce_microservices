@@ -1,167 +1,109 @@
 package com.nguyensao.product_service.controller;
 
-import com.nguyensao.product_service.dto.CategoryDto;
-import com.nguyensao.product_service.dto.ProductDto;
-import com.nguyensao.product_service.exception.AppException;
-import com.nguyensao.product_service.service.CategoryService;
-import com.nguyensao.product_service.service.ProductService;
-import lombok.RequiredArgsConstructor;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
+import com.nguyensao.product_service.dto.AttributeValueDto;
+import com.nguyensao.product_service.dto.OptionCombinationDto;
+import com.nguyensao.product_service.dto.ProductDto;
+import com.nguyensao.product_service.model.Product;
+import com.nguyensao.product_service.service.ProductService;
+
 import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/products")
+@RequestMapping("/api/catalog/products")
 public class ProductController {
 
-    private final CategoryService categoryService;
     private final ProductService productService;
 
-    public ProductController(CategoryService categoryService, ProductService productService) {
-        this.categoryService = categoryService;
+    public ProductController(ProductService productService) {
         this.productService = productService;
     }
 
-    /**
-     * 📌 1. API: Tạo danh mục
-     */
-    @PostMapping("/admin/categories/add")
-    public ResponseEntity<CategoryDto> createCategory(@RequestParam("file") MultipartFile file,
-            @RequestParam("name") String name) {
-        try {
-            CategoryDto categoryDto = CategoryDto.builder()
-                    .name(name)
-                    .build();
-            return ResponseEntity.ok(categoryService.createCategory(file, categoryDto));
-        } catch (IOException e) {
-            return ResponseEntity.status(500).body(null);
+    @GetMapping
+    public ResponseEntity<List<Product>> getAllProducts() {
+        return ResponseEntity.ok(productService.getAllProducts());
+    }
+
+    @GetMapping("/published")
+    public ResponseEntity<List<Product>> getPublishedProducts() {
+        return ResponseEntity.ok(productService.getPublishedProducts());
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
+        return productService.getProductById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/{id}/dto")
+    public ResponseEntity<ProductDto> getProductDtoById(@PathVariable Long id) {
+        return ResponseEntity.ok(productService.getProductDtoById(id));
+    }
+
+    @GetMapping("/sku/{sku}")
+    public ResponseEntity<Product> getProductBySku(@PathVariable String sku) {
+        return productService.getProductBySku(sku)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @GetMapping("/category/{categoryId}")
+    public ResponseEntity<List<Product>> getProductsByCategory(@PathVariable Long categoryId) {
+        return ResponseEntity.ok(productService.getProductsByCategory(categoryId));
+    }
+
+    @GetMapping("/brand/{brandId}")
+    public ResponseEntity<List<Product>> getProductsByBrand(@PathVariable Long brandId) {
+        return ResponseEntity.ok(productService.getProductsByBrand(brandId));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<Product>> searchProducts(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) BigDecimal minPrice,
+            @RequestParam(required = false) BigDecimal maxPrice) {
+
+        if (keyword != null && !keyword.isEmpty()) {
+            return ResponseEntity.ok(productService.searchProductsByKeyword(keyword));
+        } else if (minPrice != null && maxPrice != null) {
+            return ResponseEntity.ok(productService.searchProductsByPriceRange(minPrice, maxPrice));
+        } else {
+            return ResponseEntity.ok(productService.getAllProducts());
         }
     }
 
-    /**
-     * 📌 2. API: Cập nhật danh mục
-     */
-    @PostMapping("/admin/categories/update")
-    public ResponseEntity<CategoryDto> updateCategory(@RequestParam("id") String id,
-            @RequestParam("name") String name,
-            @RequestParam(value = "file", required = false) MultipartFile file) {
-        try {
-            return ResponseEntity.ok(categoryService.updateCategory(id, file, name));
-        } catch (IOException e) {
-            return ResponseEntity.status(500).body(null);
-        }
+    @PostMapping
+    public ResponseEntity<Product> createProduct(@RequestBody ProductDto productDto) {
+        Product createdProduct = productService.createProduct(productDto);
+        return new ResponseEntity<>(createdProduct, HttpStatus.CREATED);
     }
 
-    /**
-     * 📌 3. API: Lấy ra tất cả danh mục
-     */
-    @GetMapping("/categories")
-    public ResponseEntity<Page<CategoryDto>> getAllCategories(Pageable pageable) {
-        return ResponseEntity.ok(categoryService.getAllCategories(pageable));
+    @PutMapping("/{id}")
+    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody ProductDto productDto) {
+        Product updatedProduct = productService.updateProduct(id, productDto);
+        return ResponseEntity.ok(updatedProduct);
     }
 
-    /**
-     * 📌 4. API: Lấy ra 1 danh mục
-     */
-    @GetMapping("/categories/{id}")
-    public ResponseEntity<CategoryDto> getCategoryById(@PathVariable String id) {
-        return ResponseEntity.ok(categoryService.getCategoryById(id));
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
+        productService.deleteProduct(id);
+        return ResponseEntity.noContent().build();
     }
 
-    /**
-     * 📌 5. API: Thay đổi trạng thái danh mục
-     */
-    @GetMapping("/admin/categories/toggle-status/{id}")
-    public ResponseEntity<String> toggleCategoryStatus(@PathVariable String id) {
-        categoryService.toggleCategoryStatus(id);
-        return ResponseEntity.ok("Trạng thái danh mục đã được thay đổi!");
+    @GetMapping("/{id}/attributes")
+    public ResponseEntity<List<AttributeValueDto>> getProductAttributes(@PathVariable Long id) {
+        List<AttributeValueDto> attributes = productService.getProductAttributes(id);
+        return ResponseEntity.ok(attributes);
     }
 
-    /**
-     * 📌 6. API: Xóa danh mục
-     */
-    @DeleteMapping("/admin/categories/delete/{id}")
-    public ResponseEntity<Void> deleteCategory(@PathVariable String id) {
-        categoryService.deleteCategory(id);
-        return ResponseEntity.ok().build();
+    @GetMapping("/{id}/options")
+    public ResponseEntity<List<OptionCombinationDto>> getProductOptionCombinations(@PathVariable Long id) {
+        List<OptionCombinationDto> options = productService.getProductOptionCombinations(id);
+        return ResponseEntity.ok(options);
     }
-
-    /**
-     * 📌 7. API: Tạo sản phẩm
-     */
-    @PostMapping("/admin/add")
-    public ResponseEntity<ProductDto> createProduct(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("name") String name,
-            @RequestParam("description") String description,
-            @RequestParam("price") BigDecimal price,
-            @RequestParam("categoryId") String categoryId
-
-    ) {
-        try {
-            ProductDto productDto = ProductDto.builder()
-                    .name(name)
-                    .description(description)
-                    .price(price)
-                    .categoryId(categoryId)
-                    .build();
-            return ResponseEntity.ok(productService.createProduct(file, productDto));
-        } catch (IOException e) {
-            return ResponseEntity.status(500).body(null);
-        } catch (AppException e) {
-            return ResponseEntity.badRequest().build();
-        }
-    }
-
-    // /**
-    // * 📌 8. API: Cập nhật sản phẩm + kiểm tra còn hàng không
-    // */
-    // @PutMapping("/admin/update")
-    // public ResponseEntity<ProductDto> updateProduct(@RequestBody ProductDto
-    // productDto) {
-    // return ResponseEntity.ok(productService.updateProduct(productDto));
-    // }
-
-    // /**
-    // * 📌 9. API: Lấy sản phẩm theo id
-    // */
-    // @GetMapping("/admin/{id}")
-    // public ResponseEntity<ProductDto> getProductById(@PathVariable String id) {
-    // return ResponseEntity.ok(productService.getProductById(id));
-    // }
-
-    // /**
-    // * 📌 10. API: Xóa sản phẩm + kiểm tra có đơn hàng chưa
-    // */
-    // @DeleteMapping("/admin/{id}")
-    // public ResponseEntity<Void> deleteProduct(@PathVariable String id) {
-    // productService.deleteProduct(id);
-    // return ResponseEntity.ok().build();
-    // }
-
-    // /**
-    // * 📌 11. API: Kiểm tra sản phẩm còn hàng không
-    // */
-    // @GetMapping("/admin/inventory")
-    // public ResponseEntity<Boolean> checkProductStock(@RequestParam String
-    // productId) {
-    // return ResponseEntity.ok(productService.checkProductStock(productId));
-    // }
-
-    // /**
-    // * 📌 12. API: Cập nhật trạng thái sản phẩm
-    // */
-    // @PatchMapping("/admin/active")
-    // public ResponseEntity<Void> toggleProductStatus(@RequestParam String
-    // productId) {
-    // productService.toggleProductStatus(productId);
-    // return ResponseEntity.ok().build();
-    // }
 }

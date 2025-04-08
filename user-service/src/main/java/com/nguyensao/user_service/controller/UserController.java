@@ -19,6 +19,7 @@ import com.nguyensao.user_service.dto.response.UserLoginResponse;
 import com.nguyensao.user_service.enums.UserGender;
 import com.nguyensao.user_service.exception.AppException;
 import com.nguyensao.user_service.service.EmailService;
+import com.nguyensao.user_service.service.TokenBlacklistService;
 import com.nguyensao.user_service.service.UserService;
 import com.nguyensao.user_service.utils.GenerateOTP;
 import com.nguyensao.user_service.utils.GeneratePassword;
@@ -26,6 +27,7 @@ import com.nguyensao.user_service.utils.JwtUtil;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import java.io.IOException;
@@ -53,11 +55,14 @@ public class UserController {
         private final UserService userService;
         private final JwtUtil jwtUtil;
         private final EmailService emailService;
+        private final TokenBlacklistService tokenBlacklistService;
 
-        public UserController(UserService userService, JwtUtil jwtUtil, EmailService emailService) {
+        public UserController(UserService userService, JwtUtil jwtUtil, EmailService emailService,
+                        TokenBlacklistService tokenBlacklistService) {
                 this.userService = userService;
                 this.jwtUtil = jwtUtil;
                 this.emailService = emailService;
+                this.tokenBlacklistService = tokenBlacklistService;
         }
 
         /**

@@ -1,148 +1,281 @@
 package com.nguyensao.product_service.service;
 
-import com.nguyensao.product_service.constant.GithubConstant;
-import com.nguyensao.product_service.dto.ProductDto;
-import com.nguyensao.product_service.exception.AppException;
-import com.nguyensao.product_service.mapper.ProductMapper;
-import com.nguyensao.product_service.model.Category;
-import com.nguyensao.product_service.model.Product;
-import com.nguyensao.product_service.repository.CategoryRepository;
-import com.nguyensao.product_service.repository.ProductRepository;
-import com.nguyensao.product_service.utils.FileValidation;
-
-import org.kohsuke.github.GHContent;
-import org.kohsuke.github.GHRepository;
-import org.kohsuke.github.GitHub;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.util.List;
+import com.nguyensao.product_service.dto.AttributeValueDto;
+import com.nguyensao.product_service.dto.OptionCombinationDto;
+import com.nguyensao.product_service.dto.ProductDto;
+import com.nguyensao.product_service.exception.AppException;
+import com.nguyensao.product_service.feignclient.ProductAttributeServiceClient;
+import com.nguyensao.product_service.model.Brand;
+import com.nguyensao.product_service.model.Product;
+import com.nguyensao.product_service.model.ProductCategory;
+import com.nguyensao.product_service.model.ProductImage;
+import com.nguyensao.product_service.model.ProductRelated;
+import com.nguyensao.product_service.repository.BrandRepository;
+import com.nguyensao.product_service.repository.ProductCategoryRepository;
+import com.nguyensao.product_service.repository.ProductImageRepository;
+import com.nguyensao.product_service.repository.ProductRelatedRepository;
+import com.nguyensao.product_service.repository.ProductRepository;
+
+import java.math.BigDecimal;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class ProductService {
+
     private final ProductRepository productRepository;
-    private final CategoryRepository categoryRepository;
-    private final ProductMapper productMapper;
+    private final BrandRepository brandRepository;
+    private final ProductCategoryRepository categoryRepository;
+    private final ProductImageRepository imageRepository;
+    private final ProductRelatedRepository relatedRepository;
+    private final ProductAttributeServiceClient attributeServiceClient;
 
-    public ProductService(ProductRepository productRepository, CategoryRepository categoryRepository,
-            ProductMapper productMapper) {
+    public ProductService(
+            ProductRepository productRepository,
+            BrandRepository brandRepository,
+            ProductCategoryRepository categoryRepository,
+            ProductImageRepository imageRepository,
+            ProductRelatedRepository relatedRepository,
+            ProductAttributeServiceClient attributeServiceClient) {
         this.productRepository = productRepository;
+        this.brandRepository = brandRepository;
         this.categoryRepository = categoryRepository;
-        this.productMapper = productMapper;
-
+        this.imageRepository = imageRepository;
+        this.relatedRepository = relatedRepository;
+        this.attributeServiceClient = attributeServiceClient;
     }
 
-    /**
-     * Thêm mới sản phẩm
-     * 
-     */
-    @Transactional
-    public ProductDto createProduct(MultipartFile file, ProductDto productDto) throws IOException {
-        Category category = categoryRepository.findById(productDto.getCategoryId())
-                .orElseThrow(() -> new RuntimeException("Danh mục không tồn tại"));
-        GitHub github = GitHub.connectUsingOAuth(GithubConstant.GITHUB_TOKEN);
-        GHRepository repository = github.getRepository(GithubConstant.REPO_NAME);
-        String timestamp = String.valueOf(System.currentTimeMillis());
-        String imagePath = "microservice/products/" + timestamp + "_" + file.getOriginalFilename();
-        if (!FileValidation.isValidImage(file)) {
-            throw new AppException("Chỉ chấp nhận file JPG, PNG, JPEG, GIF!");
-        }
-        repository.createContent()
-                .content(file.getBytes())
-                .path(imagePath)
-                .message("Tải ảnh sản phẩm: " + file.getOriginalFilename())
-                .branch(GithubConstant.BRANCH)
-                .commit();
-        String imageUrl = "https://raw.githubusercontent.com/" + GithubConstant.REPO_NAME + "/" + GithubConstant.BRANCH
-                + "/" + imagePath;
-        Product product = productMapper.toProductEntity(productDto);
-        product.setImageUrl(imageUrl);
-        product.setCategory(category);
-        productRepository.save(product);
-        return productMapper.toProductDto(product);
+    public List<Product> getAllProducts() {
+        return productRepository.findAll();
     }
 
-    /**
-     * Cập nhật sản phẩm
-     * 
-     * @throws IOException
-     */
+    public List<Product> getPublishedProducts() {
+        return productRepository.findByIsPublishedTrue();
+    }
+
+    public Optional<Product> getProductById(Long id) {
+        return productRepository.findById(id);
+    }
+
+    public Optional<Product> getProductBySku(String sku) {
+        return productRepository.findBySku(sku);
+    }
+
+    public List<Product> getProductsByCategory(Long categoryId) {
+        return productRepository.findByCategory(categoryId);
+    }
+
+    public List<Product> getProductsByBrand(Long brandId) {
+        return productRepository.findByBrandId(brandId);
+    }
+
+    public List<Product> searchProductsByKeyword(String keyword) {
+        return productRepository.findByNameContainingOrShortDescriptionContainingOrDescriptionContaining(
+                keyword, keyword, keyword);
+    }
+
+    public List<Product> searchProductsByPriceRange(BigDecimal minPrice, BigDecimal maxPrice) {
+        return productRepository.findByPriceBetween(minPrice, maxPrice);
+    }
+
     @Transactional
-    public ProductDto updateProduct(MultipartFile file, ProductDto productDto) throws IOException {
-        Product existingProduct = productRepository.findById(productDto.getId())
-                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
-        productMapper.toProductEntity(productDto);
-        if (file != null && !file.isEmpty()) {
-            if (!FileValidation.isValidImage(file)) {
-                throw new AppException("Chỉ chấp nhận file JPG, PNG, JPEG, GIF!");
+    public Product createProduct(ProductDto productDto) {
+        Product product = new Product();
+        updateProductFromDto(product, productDto);
+
+        Product savedProduct = productRepository.save(product);
+
+        // Save images if provided
+        if (productDto.getImages() != null && !productDto.getImages().isEmpty()) {
+            for (var imageDto : productDto.getImages()) {
+                ProductImage image = new ProductImage();
+                image.setProduct(savedProduct);
+                image.setImageUrl(imageDto.getImageUrl());
+                image.setCaption(imageDto.getCaption());
+                image.setDisplayOrder(imageDto.getDisplayOrder());
+                image.setMain(imageDto.isMain());
+                imageRepository.save(image);
             }
-            GitHub github = GitHub.connectUsingOAuth(GithubConstant.GITHUB_TOKEN);
-            GHRepository repository = github.getRepository(GithubConstant.REPO_NAME);
-
-            String oldImageUrl = existingProduct.getImageUrl();
-            if (oldImageUrl != null && oldImageUrl.contains(GithubConstant.REPO_NAME)) {
-                String oldImagePath = oldImageUrl.substring(oldImageUrl.indexOf("microservice"));
-                GHContent content = repository.getFileContent(oldImagePath, GithubConstant.BRANCH);
-                content.delete("Xóa ảnh cũ khi cập nhật danh mục");
-            }
-
-            String timestamp = String.valueOf(System.currentTimeMillis());
-            String imagePath = "microservice/products/" + timestamp + "_" + file.getOriginalFilename();
-
-            repository.createContent()
-                    .content(file.getBytes())
-                    .path(imagePath)
-                    .message("Cập nhật ảnh sản phẩm: " + file.getOriginalFilename())
-                    .branch(GithubConstant.BRANCH)
-                    .commit();
-
-            String newImageUrl = "https://raw.githubusercontent.com/" + GithubConstant.REPO_NAME + "/"
-                    + GithubConstant.BRANCH
-                    + "/" + imagePath;
-            existingProduct.setImageUrl(newImageUrl);
         }
 
-        productRepository.save(existingProduct);
-        return productMapper.toProductDto(existingProduct);
+        // Save related products if provided
+        if (productDto.getRelatedProductIds() != null && !productDto.getRelatedProductIds().isEmpty()) {
+            for (Long relatedId : productDto.getRelatedProductIds()) {
+                Product relatedProduct = productRepository.findById(relatedId)
+                        .orElseThrow(() -> new AppException("Related product not found with id: " + relatedId));
+
+                ProductRelated related = new ProductRelated();
+                related.setProduct(savedProduct);
+                related.setRelatedProduct(relatedProduct);
+                relatedRepository.save(related);
+            }
+        }
+
+        // Save attribute values if provided
+        if (productDto.getAttributeValues() != null && !productDto.getAttributeValues().isEmpty()) {
+            attributeServiceClient.addAttributeValuesToProduct(savedProduct.getId(), productDto.getAttributeValues());
+        }
+
+        // Save option combinations if provided
+        if (productDto.getOptionCombinations() != null && !productDto.getOptionCombinations().isEmpty()) {
+            attributeServiceClient.addOptionCombinationsToProduct(savedProduct.getId(),
+                    productDto.getOptionCombinations());
+        }
+
+        return savedProduct;
     }
 
-    /**
-     * Lấy danh sách tất cả sản phẩm
-     */
-    public List<ProductDto> getAllProducts() {
-        List<Product> products = productRepository.findAll();
-        return products.stream().map(productMapper::toProductDto).collect(Collectors.toList());
-    }
-
-    /**
-     * Lấy thông tin sản phẩm theo ID
-     */
-    public ProductDto getProductById(String id) {
+    @Transactional
+    public Product updateProduct(Long id, ProductDto productDto) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
-        return productMapper.toProductDto(product);
+                .orElseThrow(() -> new AppException("Product not found with id: " + id));
+
+        updateProductFromDto(product, productDto);
+
+        Product updatedProduct = productRepository.save(product);
+
+        // Update attribute values if provided
+        if (productDto.getAttributeValues() != null) {
+            attributeServiceClient.updateAttributeValuesForProduct(id, productDto.getAttributeValues());
+        }
+
+        // Update option combinations if provided
+        if (productDto.getOptionCombinations() != null) {
+            attributeServiceClient.deleteOptionCombinationsByProductId(id);
+            if (!productDto.getOptionCombinations().isEmpty()) {
+                attributeServiceClient.addOptionCombinationsToProduct(id, productDto.getOptionCombinations());
+            }
+        }
+
+        return updatedProduct;
     }
 
-    /**
-     * Xóa sản phẩm
-     */
     @Transactional
-    public void deleteProduct(String id) {
+    public void deleteProduct(Long id) {
         if (!productRepository.existsById(id)) {
-            throw new RuntimeException("Sản phẩm không tồn tại");
+            throw new AppException("Product not found with id: " + id);
         }
+
+        // Delete attribute values and option combinations
+        attributeServiceClient.deleteProductAttributes(id);
+        attributeServiceClient.deleteOptionCombinationsByProductId(id);
+
+        // Delete the product
         productRepository.deleteById(id);
     }
 
-    /**
-     * Kiểm tra sản phẩm còn hàng không
-     */
-    public boolean isProductInStock(String id) {
+    public List<AttributeValueDto> getProductAttributes(Long productId) {
+        if (!productRepository.existsById(productId)) {
+            throw new AppException("Product not found with id: " + productId);
+        }
+
+        return attributeServiceClient.getAttributeValuesByProductId(productId);
+    }
+
+    public List<OptionCombinationDto> getProductOptionCombinations(Long productId) {
+        if (!productRepository.existsById(productId)) {
+            throw new AppException("Product not found with id: " + productId);
+        }
+
+        return attributeServiceClient.getOptionCombinationsByProductId(productId);
+    }
+
+    public ProductDto getProductDtoById(Long id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Sản phẩm không tồn tại"));
-        return product.getStock();
+                .orElseThrow(() -> new AppException("Product not found with id: " + id));
+
+        return convertToDto(product);
+    }
+
+    private void updateProductFromDto(Product product, ProductDto dto) {
+        product.setName(dto.getName());
+        product.setShortDescription(dto.getShortDescription());
+        product.setDescription(dto.getDescription());
+        product.setSku(dto.getSku());
+        product.setPrice(dto.getPrice());
+        product.setOldPrice(dto.getOldPrice());
+        product.setSpecialPrice(dto.getSpecialPrice());
+        product.setPublished(dto.isPublished());
+
+        // Set brand if provided
+        if (dto.getBrandId() != null) {
+            Brand brand = brandRepository.findById(dto.getBrandId())
+                    .orElseThrow(() -> new AppException("Brand not found with id: " + dto.getBrandId()));
+            product.setBrand(brand);
+        } else {
+            product.setBrand(null);
+        }
+
+        // Set parent product if provided
+        if (dto.getParentId() != null) {
+            Product parent = productRepository.findById(dto.getParentId())
+                    .orElseThrow(() -> new AppException(
+                            "Parent product not found with id: " + dto.getParentId()));
+            product.setParent(parent);
+        } else {
+            product.setParent(null);
+        }
+
+        // Set categories
+        if (dto.getCategoryIds() != null) {
+            Set<ProductCategory> categories = new HashSet<>();
+            for (Long categoryId : dto.getCategoryIds()) {
+                ProductCategory category = categoryRepository.findById(categoryId)
+                        .orElseThrow(() -> new AppException("Category not found with id: " + categoryId));
+                categories.add(category);
+            }
+            product.setCategories(categories);
+        }
+    }
+
+    private ProductDto convertToDto(Product product) {
+        ProductDto dto = new ProductDto();
+        dto.setId(product.getId());
+        dto.setName(product.getName());
+        dto.setShortDescription(product.getShortDescription());
+        dto.setDescription(product.getDescription());
+        dto.setSku(product.getSku());
+        dto.setPrice(product.getPrice());
+        dto.setOldPrice(product.getOldPrice());
+        dto.setSpecialPrice(product.getSpecialPrice());
+        dto.setPublished(product.isPublished());
+
+        if (product.getBrand() != null) {
+            dto.setBrandId(product.getBrand().getId());
+            dto.setBrandName(product.getBrand().getName());
+        }
+
+        if (product.getParent() != null) {
+            dto.setParentId(product.getParent().getId());
+        }
+
+        // Set category IDs
+        Set<Long> categoryIds = product.getCategories().stream()
+                .map(ProductCategory::getId)
+                .collect(Collectors.toSet());
+        dto.setCategoryIds(categoryIds);
+
+        // Get attribute values
+        try {
+            List<AttributeValueDto> attributeValues = attributeServiceClient
+                    .getAttributeValuesByProductId(product.getId());
+            dto.setAttributeValues(attributeValues);
+        } catch (Exception e) {
+            // Handle exception or log it
+        }
+
+        // Get option combinations
+        try {
+            List<OptionCombinationDto> optionCombinations = attributeServiceClient
+                    .getOptionCombinationsByProductId(product.getId());
+            dto.setOptionCombinations(optionCombinations);
+        } catch (Exception e) {
+            // Handle exception or log it
+        }
+
+        return dto;
     }
 }
