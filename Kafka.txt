@@ -1,0 +1,35 @@
+//Kiểm tra danh sách các topic
+docker exec -it kafka kafka-topics --bootstrap-server localhost:9092 --list
+ 
+//Xem thông tin chi tiết của một topic cụ thể
+docker exec -it kafka kafka-topics --bootstrap-server localhost:9092 --describe --topic <ten_topic>
+
+//Đọc dữ liệu từ một topic
+docker exec -it kafka kafka-console-consumer --bootstrap-server localhost:9092 --topic my-topic --from-beginning
+
+
+// Xem dữ liệu mới trong thời gian thực
+docker exec -it kafka kafka-console-consumer --bootstrap-server localhost:9092 --topic product-events
+
+// Xem phân vùng và thông tin topic
+docker exec -it kafka kafka-topics --bootstrap-server localhost:9092 --describe --topic product-events
+
+
+ //Xóa topic
+docker exec -it kafka kafka-topics --bootstrap-server localhost:9092 --delete --topic product-events
+
+//Tạo topic
+docker exec -it kafka kafka-topics --bootstrap-server localhost:9092 --create --topic product-events --partitions 1 --replication-factor 1
+
+
+//Kiểm tra group-tiêu thụ
+docker exec -it kafka kafka-consumer-groups --bootstrap-server localhost:9092 --describe --group attribute-group
+
+//Kiểm tra cả 2 từ topic->group
+docker exec -it kafka kafka-console-consumer --bootstrap-server localhost:9092 --topic attribute-events --group attribute-group --from-beginning
+
+docker exec -it kafka kafka-console-consumer --bootstrap-server localhost:9092 --topic product-events --group product-group --from-beginning
+
+
+//Reset
+docker exec -it kafka kafka-consumer-groups --bootstrap-server localhost:9092 --group attribute-group --reset-offsets --to-earliest --topic attribute-events --execute

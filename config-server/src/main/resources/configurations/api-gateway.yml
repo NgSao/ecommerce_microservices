@@ -7,14 +7,29 @@ spring:
         locator:
           enabled: true
       routes:
-        - id: user-service
-          uri: lb://user-service
-          predicates:
-            - Path=/api/v1/users/**
         - id: product-service
           uri: lb://product-service
           predicates:
             - Path=/api/v1/products/**
+        - id: user-service
+          uri: lb://user-service
+          predicates:
+            - Path=/api/v1/users/**
+
+
+        - id: inventory-service
+          uri: lb://inventory-service
+          predicates:
+            - Path=/api/v1/inventories/*
+        - id: order-service
+          uri: lb://order-service
+          predicates:
+            - Path=/api/v1/orders/**
+        - id: promotion-service
+          uri: lb://promotion-service
+          predicates:
+            - Path=/api/v1/promotions/**
+
   application:
     name: api-gateway
 eureka:
@@ -26,5 +41,7 @@ eureka:
     service-url:
       defaultZone: http://localhost:8761/eureka/
 
-
-
+logging:
+  level:
+    org.springframework.cloud.gateway: DEBUG
+    reactor.netty: DEBUG

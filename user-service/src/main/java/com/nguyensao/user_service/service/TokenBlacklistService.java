@@ -7,18 +7,18 @@ import java.time.Duration;
 
 @Service
 public class TokenBlacklistService {
-
     private final StringRedisTemplate redisTemplate;
+    private static final String BLACKLIST_PREFIX = "blacklist:";
 
     public TokenBlacklistService(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
 
-    public void blacklistToken(String token, long expirationInSeconds) {
-        redisTemplate.opsForValue().set(token, "blacklisted", Duration.ofSeconds(expirationInSeconds));
+    public void blacklist(String token) {
+        redisTemplate.opsForValue().set(BLACKLIST_PREFIX + token, "true", Duration.ofHours(1));
     }
 
-    public boolean isTokenBlacklisted(String token) {
-        return redisTemplate.hasKey(token);
+    public boolean isBlacklisted(String token) {
+        return Boolean.TRUE.toString().equals(redisTemplate.opsForValue().get(BLACKLIST_PREFIX + token));
     }
 }

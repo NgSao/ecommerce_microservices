@@ -2,7 +2,7 @@ server:
   port: 8081
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/userservice?createDatabaseIfNotExist=true
+    url: jdbc:mysql://localhost:3306/server_user?createDatabaseIfNotExist=true
     username: root  
     password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -13,22 +13,53 @@ spring:
     database: mysql
     properties:
       hibernate:
-        format_sql: true
         dialect: org.hibernate.dialect.MySQL8Dialect
   application:
     name: user-service
+  data:
+    web:
+      pageable:
+        default-page-size: 10
+        max-page-size: 100
+        default-page-number: 0
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 
+            client-secret: 
+            redirect-uri: http://localhost:8081/api/v1/oauth2/callback/google
+            scope:
+              - openid
+              - email
+              - profile
+          facebook:
+            client-id: 
+            client-secret: 
+            redirect-uri: http://localhost:8081/api/v1/oauth2/callback/facebook
+            scope:
+              - email
+              - public_profile
+        provider:
+          google:
+            authorization-uri: https://accounts.google.com/o/oauth2/v2/auth
+            token-uri: https://oauth2.googleapis.com/token
+            user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+            user-name-attribute: sub
+          facebook:
+            authorization-uri: https://www.facebook.com/v12.0/dialog/oauth
+            token-uri: https://graph.facebook.com/v12.0/oauth/access_token
+            user-info-uri: https://graph.facebook.com/v12.0/me?fields=id,name,email
+            user-name-attribute: id
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.type.mapping: OtpEvent:com.nguyensao.user_service.kafka.OtpEvent
 
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: nguyenminhco2964@gmail.com
-    password: znqzohaqvognuaff
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
 eureka:
   instance:
     hostname: localhost
@@ -37,15 +68,24 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: http://localhost:8761/eureka/
+
+jwt:
+  secret: 
+
+github:
+  token: 
+  owner: 
+
 springdoc:
   api-docs:
     enabled: true
   swagger-ui:
     path: /swagger-ui.html
 
-jwt:
-  secret: mQz7qDcLZxpDCVh/2zyoxs6my1LOkppq7x/+SkOsO78j6U3MOlt06o4h5G3gH+M8QuneFwaMtlXT12L61n1lTg==
-
-
-
-
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG
+        oauth2:  DEBUG
+        web: DEBUG

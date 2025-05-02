@@ -20,7 +20,7 @@ import lombok.experimental.FieldDefaults;
 public class UserRegisterRequest {
     @NotBlank(message = "Họ và tên không được bỏ trống")
     @Schema(description = "Họ và tên của người dùng", example = "Nguyễn Văn A")
-    String fullname;
+    String fullName;
 
     @NotBlank(message = "Email không được bỏ trống")
     @Email(message = "Email không hợp lệ")
@@ -30,8 +30,4 @@ public class UserRegisterRequest {
     @NotBlank(message = "Mật khẩu không được bỏ trống")
     @Schema(description = "Mật khẩu của tài khoản", example = "Password@123")
     String password;
-
-    @NotBlank(message = "Xác nhận mật khẩu không được bỏ trống")
-    @Schema(description = "Nhập lại mật khẩu để xác nhận", example = "Password@123")
-    String passwordAgain;
 }

@@ -16,7 +16,6 @@ import io.swagger.v3.oas.models.servers.Server;
 
 @Configuration
 public class OpenAPIConfig {
-    // 🔹 Cấu hình Bearer Token
     private SecurityScheme createBearerScheme() {
         return new SecurityScheme()
                 .type(SecurityScheme.Type.HTTP)

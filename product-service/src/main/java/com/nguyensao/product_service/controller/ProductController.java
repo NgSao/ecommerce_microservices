@@ -1,109 +1,126 @@
 package com.nguyensao.product_service.controller;
 
-import org.springframework.http.HttpStatus;
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.nguyensao.product_service.dto.AttributeValueDto;
-import com.nguyensao.product_service.dto.OptionCombinationDto;
+import com.nguyensao.product_service.dto.BrandDto;
+import com.nguyensao.product_service.dto.CategoryDto;
 import com.nguyensao.product_service.dto.ProductDto;
-import com.nguyensao.product_service.model.Product;
+import com.nguyensao.product_service.dto.VariantDto;
+import com.nguyensao.product_service.dto.request.BrandRequest;
+import com.nguyensao.product_service.dto.request.CategoryRequest;
+import com.nguyensao.product_service.dto.request.ProductRequest;
+import com.nguyensao.product_service.dto.request.VariantRequest;
+import com.nguyensao.product_service.service.BrandService;
+import com.nguyensao.product_service.service.CategoryService;
 import com.nguyensao.product_service.service.ProductService;
 
-import java.math.BigDecimal;
-import java.util.List;
-
 @RestController
-@RequestMapping("/api/catalog/products")
+@RequestMapping("/api/v1/products")
 public class ProductController {
 
     private final ProductService productService;
+    private final CategoryService categoryService;
+    private final BrandService brandService;
 
-    public ProductController(ProductService productService) {
+    public ProductController(ProductService productService, CategoryService categoryService,
+            BrandService brandService) {
         this.productService = productService;
+        this.categoryService = categoryService;
+        this.brandService = brandService;
+
     }
 
-    @GetMapping
-    public ResponseEntity<List<Product>> getAllProducts() {
-        return ResponseEntity.ok(productService.getAllProducts());
+    @GetMapping("/public")
+    public ResponseEntity<List<ProductDto>> getAllProducts() {
+        return ResponseEntity.ok().body(productService.getAllProducts());
     }
 
-    @GetMapping("/published")
-    public ResponseEntity<List<Product>> getPublishedProducts() {
-        return ResponseEntity.ok(productService.getPublishedProducts());
+    @GetMapping("/public/{id}")
+    public ResponseEntity<ProductDto> getProduct(@PathVariable Long id) {
+        return ResponseEntity.ok().body(productService.getProduct(id));
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
-        return productService.getProductById(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    @PostMapping("/admin")
+    public ResponseEntity<ProductDto> createProduct(@RequestBody ProductRequest request) {
+        return ResponseEntity.ok().body(productService.createProduct(request));
     }
 
-    @GetMapping("/{id}/dto")
-    public ResponseEntity<ProductDto> getProductDtoById(@PathVariable Long id) {
-        return ResponseEntity.ok(productService.getProductDtoById(id));
+    @PostMapping("/admin/variant")
+    public ResponseEntity<VariantDto> addVariant(@RequestBody VariantRequest request) {
+        return ResponseEntity.ok().body(productService.addVariant(request));
     }
 
-    @GetMapping("/sku/{sku}")
-    public ResponseEntity<Product> getProductBySku(@PathVariable String sku) {
-        return productService.getProductBySku(sku)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    @PutMapping("/admin/variant/{id}")
+    public ResponseEntity<VariantDto> updateVariant(@PathVariable Long id, @RequestBody VariantRequest request) {
+        return ResponseEntity.ok().body(productService.updateVariant(id, request));
     }
 
-    @GetMapping("/category/{categoryId}")
-    public ResponseEntity<List<Product>> getProductsByCategory(@PathVariable Long categoryId) {
-        return ResponseEntity.ok(productService.getProductsByCategory(categoryId));
+    @DeleteMapping("/admin/variant/{id}")
+    public ResponseEntity<String> deleteVariant(@PathVariable Long id) {
+        productService.deleteVariant(id);
+        return ResponseEntity.ok().body("Xóa thành công");
     }
 
-    @GetMapping("/brand/{brandId}")
-    public ResponseEntity<List<Product>> getProductsByBrand(@PathVariable Long brandId) {
-        return ResponseEntity.ok(productService.getProductsByBrand(brandId));
+    // Category
+    @GetMapping("/public/categories")
+    public ResponseEntity<List<CategoryDto>> getAllCategories() {
+        return ResponseEntity.ok().body(categoryService.getAllCategories());
     }
 
-    @GetMapping("/search")
-    public ResponseEntity<List<Product>> searchProducts(
-            @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) BigDecimal minPrice,
-            @RequestParam(required = false) BigDecimal maxPrice) {
+    @GetMapping("/public/categories/{id}")
+    public ResponseEntity<CategoryDto> getCategoryById(@PathVariable Long id) {
+        return ResponseEntity.ok().body(categoryService.getCategory(id));
 
-        if (keyword != null && !keyword.isEmpty()) {
-            return ResponseEntity.ok(productService.searchProductsByKeyword(keyword));
-        } else if (minPrice != null && maxPrice != null) {
-            return ResponseEntity.ok(productService.searchProductsByPriceRange(minPrice, maxPrice));
-        } else {
-            return ResponseEntity.ok(productService.getAllProducts());
-        }
     }
 
-    @PostMapping
-    public ResponseEntity<Product> createProduct(@RequestBody ProductDto productDto) {
-        Product createdProduct = productService.createProduct(productDto);
-        return new ResponseEntity<>(createdProduct, HttpStatus.CREATED);
+    @PostMapping("/admin/categories")
+    public ResponseEntity<CategoryDto> createCategory(@RequestBody CategoryRequest request) {
+        return ResponseEntity.ok().body(categoryService.createCategory(request));
+
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Product> updateProduct(@PathVariable Long id, @RequestBody ProductDto productDto) {
-        Product updatedProduct = productService.updateProduct(id, productDto);
-        return ResponseEntity.ok(updatedProduct);
+    @PutMapping("/admin/categories/{id}")
+    public ResponseEntity<CategoryDto> updateCategory(
+            @PathVariable Long id,
+            @RequestBody CategoryRequest request) {
+        return ResponseEntity.ok().body(categoryService.updateCategory(id, request));
+
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProduct(@PathVariable Long id) {
-        productService.deleteProduct(id);
-        return ResponseEntity.noContent().build();
+    @DeleteMapping("/admin/categories/{id}")
+    public String deleteCategory(@PathVariable Long id) {
+        categoryService.deleteCategory(id);
+        return "Category with id " + id + " deleted successfully";
     }
 
-    @GetMapping("/{id}/attributes")
-    public ResponseEntity<List<AttributeValueDto>> getProductAttributes(@PathVariable Long id) {
-        List<AttributeValueDto> attributes = productService.getProductAttributes(id);
-        return ResponseEntity.ok(attributes);
+    // Brand
+    @GetMapping("/public/brands")
+    public ResponseEntity<List<BrandDto>> getAllBrands() {
+        return ResponseEntity.ok().body(brandService.getAllBrands());
     }
 
-    @GetMapping("/{id}/options")
-    public ResponseEntity<List<OptionCombinationDto>> getProductOptionCombinations(@PathVariable Long id) {
-        List<OptionCombinationDto> options = productService.getProductOptionCombinations(id);
-        return ResponseEntity.ok(options);
+    @GetMapping("/public/brands/{id}")
+    public ResponseEntity<BrandDto> getBrandById(@PathVariable Long id) {
+        return ResponseEntity.ok().body(brandService.getBrand(id));
     }
+
+    @PostMapping("/admin/brands")
+    public ResponseEntity<BrandDto> createBrand(@RequestBody BrandRequest request) {
+        return ResponseEntity.ok().body(brandService.createBrand(request));
+    }
+
+    @PutMapping("/admin/brands/{id}")
+    public ResponseEntity<BrandDto> updateBrand(@PathVariable Long id, BrandRequest request) {
+        return ResponseEntity.ok().body(brandService.updateBrand(id, request));
+    }
+
+    @DeleteMapping("/admin/brands/{id}")
+    public String deleteBrand(@PathVariable Long id) {
+        brandService.deleteBrand(id);
+        return "Xóa thành công";
+    }
+
 }

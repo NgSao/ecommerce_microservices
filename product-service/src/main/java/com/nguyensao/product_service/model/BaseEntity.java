@@ -12,7 +12,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-@MappedSuperclass // Là lớp cha, k phải entity
+@MappedSuperclass 
 public abstract class BaseEntity {
     protected Instant createdAt;
 

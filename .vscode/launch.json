@@ -1,0 +1,130 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "ProductServiceApplication",
+            "request": "launch",
+            "mainClass": "com.nguyensao.product_service.ProductServiceApplication",
+            "projectName": ""
+        },
+        {
+            "type": "java",
+            "name": "Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "ApiGatewayApplication",
+            "request": "launch",
+            "mainClass": "com.nguyensao.api_gateway.ApiGatewayApplication",
+            "projectName": "api-gateway"
+        },
+        {
+            "type": "java",
+            "name": "AttributeServiceApplication",
+            "request": "launch",
+            "mainClass": "com.nguyensao.attribute_service.AttributeServiceApplication",
+            "projectName": "attribute-service"
+        },
+        {
+            "type": "java",
+            "name": "ConfigServerApplication",
+            "request": "launch",
+            "mainClass": "com.nguyensao.config_server.ConfigServerApplication",
+            "projectName": "config-server"
+        },
+        {
+            "type": "java",
+            "name": "EurekaServerApplication",
+            "request": "launch",
+            "mainClass": "com.nguyensao.eureka_server.EurekaServerApplication",
+            "projectName": "eureka-server"
+        },
+        {
+            "type": "java",
+            "name": "ProductServiceApplication",
+            "request": "launch",
+            "mainClass": "com.nguyensao.product_service.ProductServiceApplication",
+            "projectName": "product-service"
+        },
+        {
+            "type": "java",
+            "name": "UserServiceApplication",
+            "request": "launch",
+            "mainClass": "com.nguyensao.user_service.UserServiceApplication",
+            "projectName": "user-service"
+        }
+    ]
+}
+// {
+//     "version": "0.2.0",
+//     "configurations": [
+//         {
+//             "type": "java",
+//             "name": "Current File",
+//             "request": "launch",
+//             "mainClass": "${file}"
+//         },
+//         {
+//             "type": "java",
+//             "name": "ApiGateway",
+//             "request": "launch",
+//             "mainClass": "com.nguyensao.api_gateway.ApiGatewayApplication",
+//             "projectName": "api-gateway"
+//         },
+//         {
+//             "type": "java",
+//             "name": "AttributeService",
+//             "request": "launch",
+//             "mainClass": "com.nguyensao.attribute_service.AttributeServiceApplication",
+//             "projectName": "attribute-service"
+//         },
+//         {
+//             "type": "java",
+//             "name": "ConfigServer",
+//             "request": "launch",
+//             "mainClass": "com.nguyensao.config_server.ConfigServerApplication",
+//             "projectName": "config-server"
+//         },
+//         {
+//             "type": "java",
+//             "name": "EurekaServer",
+//             "request": "launch",
+//             "mainClass": "com.nguyensao.eureka_server.EurekaServerApplication",
+//             "projectName": "eureka-server"
+//         },
+//         {
+//             "type": "java",
+//             "name": "UserService",
+//             "request": "launch",
+//             "mainClass": "com.nguyensao.user_service.UserServiceApplication",
+//             "projectName": "user-service"
+//         },
+//         {
+//             "type": "java",
+//             "name": "NotificationService",
+//             "request": "launch",
+//             "mainClass": "com.nguyensao.notification_service.NotificationServiceApplication",
+//             "projectName": "notification-service"
+//         },
+//         {
+//             "type": "java",
+//             "name": "InventoryService",
+//             "request": "launch",
+//             "mainClass": "com.nguyensao.inventory_service.InventoryServiceApplication",
+//             "projectName": "inventory-service"
+//         },
+//         {
+//             "type": "java",
+//             "name": "PromotionService",
+//             "request": "launch",
+//             "mainClass": "com.nguyensao.promotion_service.PromotionServiceApplication",
+//             "projectName": "promotion-service"
+//         }
+//     ]
+// }

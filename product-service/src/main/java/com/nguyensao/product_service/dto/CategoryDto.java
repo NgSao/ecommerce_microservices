@@ -1,16 +1,26 @@
 package com.nguyensao.product_service.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import java.util.HashSet;
+import java.util.Set;
 
-@Data
-@NoArgsConstructor
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.FieldDefaults;
+
+@Getter
+@Setter
 @AllArgsConstructor
+@NoArgsConstructor
+@FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class CategoryDto {
-    private Long id;
-    private String name;
-    private String slug;
-    private Long parentId;
-    private boolean isPublished;
+    Long id;
+    String name;
+    String slug;
+    String imageUrl;
+    Long parentId;
+    int displayOrder;
+    Set<CategoryDto> children = new HashSet<>();
+
 }

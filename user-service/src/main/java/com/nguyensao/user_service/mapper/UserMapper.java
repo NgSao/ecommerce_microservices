@@ -20,7 +20,8 @@ public class UserMapper {
 
     public User toUserUpdatedRequest(UserUpdateRequest request) {
         return User.builder()
-                .fullname(request.getFullname())
+                .fullName(request.getFullName())
+                .password(request.getPhone())
                 .birthday(request.getBirthday())
                 .profileImageUrl(request.getProfileImageUrl())
                 .gender(request.getGender())
@@ -29,7 +30,7 @@ public class UserMapper {
 
     public User toUserRegisterRequest(UserRegisterRequest request) {
         return User.builder()
-                .fullname(request.getFullname())
+                .fullName(request.getFullName())
                 .email(request.getEmail())
                 .password(request.getPassword())
                 .build();
@@ -39,11 +40,14 @@ public class UserMapper {
         if (user == null)
             return null;
         return UserCustomerResponse.builder()
-                .fullname(user.getFullname())
+                .fullName(user.getFullName())
                 .email(user.getEmail())
+                .phone(user.getPhone())
                 .profileImageUrl(user.getProfileImageUrl())
+                .birthday(user.getBirthday())
                 .role(user.getRole())
                 .status(user.getStatus())
+                .lastLoginDate(user.getLastLoginDate())
                 .createdAt(user.getCreatedAt())
                 .build();
     }
@@ -53,7 +57,7 @@ public class UserMapper {
             return null;
         return UserDto.builder()
                 .id(user.getId())
-                .fullname(user.getFullname())
+                .fullName(user.getFullName())
                 .email(user.getEmail())
                 .password(user.getPassword())
                 .profileImageUrl(user.getProfileImageUrl())
@@ -61,8 +65,11 @@ public class UserMapper {
                 .gender(user.getGender())
                 .role(user.getRole())
                 .status(user.getStatus())
+                .lastLoginDate(user.getLastLoginDate())
                 .createdAt(user.getCreatedAt())
                 .createdBy(user.getCreatedBy())
+                .updatedAt(user.getUpdatedAt())
+                .updatedBy(user.getUpdatedBy())
                 .build();
     }
 
@@ -70,7 +77,7 @@ public class UserMapper {
         if (dto == null)
             return null;
         return User.builder()
-                .fullname(dto.getFullname())
+                .fullName(dto.getFullName())
                 .email(dto.getEmail())
                 .password(dto.getPassword())
                 .birthday(dto.getBirthday())
@@ -92,7 +99,7 @@ public class UserMapper {
             return null;
         return AddressDto.builder()
                 .id(address.getId())
-                .fullname(address.getFullname())
+                .fullName(address.getFullName())
                 .phone(address.getPhone())
                 .city(address.getCity())
                 .district(address.getDistrict())
@@ -106,7 +113,7 @@ public class UserMapper {
         if (dto == null)
             return null;
         return Address.builder()
-                .fullname(dto.getFullname())
+                .fullName(dto.getFullname())
                 .phone(dto.getPhone())
                 .city(dto.getCity())
                 .district(dto.getDistrict())
@@ -124,7 +131,7 @@ public class UserMapper {
 
         address.setId(dto.getId());
         if (dto.getFullname() != null)
-            address.setFullname(dto.getFullname());
+            address.setFullName(dto.getFullname());
         if (dto.getPhone() != null)
             address.setPhone(dto.getPhone());
         if (dto.getCity() != null)

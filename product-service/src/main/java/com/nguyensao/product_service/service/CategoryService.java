@@ -1,78 +1,74 @@
 package com.nguyensao.product_service.service;
 
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
+import com.nguyensao.product_service.constant.ExceptionConstant;
 import com.nguyensao.product_service.dto.CategoryDto;
+import com.nguyensao.product_service.dto.request.CategoryRequest;
 import com.nguyensao.product_service.exception.AppException;
-import com.nguyensao.product_service.model.ProductCategory;
-import com.nguyensao.product_service.repository.ProductCategoryRepository;
+import com.nguyensao.product_service.mapper.CategoryMapper;
+import com.nguyensao.product_service.model.Category;
+import com.nguyensao.product_service.repository.CategoryRepository;
 
 import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class CategoryService {
 
-    private final ProductCategoryRepository categoryRepository;
+    private final CategoryRepository categoryRepository;
+    private final CategoryMapper categoryMapper;
 
-    public CategoryService(ProductCategoryRepository categoryRepository) {
+    public CategoryService(CategoryRepository categoryRepository, CategoryMapper categoryMapper) {
         this.categoryRepository = categoryRepository;
+        this.categoryMapper = categoryMapper;
+
     }
 
-    public List<ProductCategory> getAllCategories() {
-        return categoryRepository.findAll();
-    }
-
-    public List<ProductCategory> getPublishedCategories() {
-        return categoryRepository.findByIsPublishedTrue();
-    }
-
-    public Optional<ProductCategory> getCategoryById(Long id) {
-        return categoryRepository.findById(id);
-    }
-
-    public Optional<ProductCategory> getCategoryBySlug(String slug) {
-        return categoryRepository.findBySlug(slug);
-    }
-
-    public List<ProductCategory> getCategoriesByParentId(Long parentId) {
-        return categoryRepository.findByParentId(parentId);
-    }
-
-    @Transactional
-    public ProductCategory saveCategory(ProductCategory category) {
-        return categoryRepository.save(category);
-    }
-
-    @Transactional
-    public void deleteCategory(Long id) {
-        categoryRepository.deleteById(id);
-    }
-
-    public List<CategoryDto> getAllCategoryDtos() {
-        return categoryRepository.findAll().stream()
-                .map(this::convertToDto)
-                .collect(Collectors.toList());
-    }
-
-    public CategoryDto getCategoryDtoById(Long id) {
-        ProductCategory category = categoryRepository.findById(id)
-                .orElseThrow(() -> new AppException("Category not found with id: " + id));
-        return convertToDto(category);
-    }
-
-    private CategoryDto convertToDto(ProductCategory category) {
-        CategoryDto dto = new CategoryDto();
-        dto.setId(category.getId());
-        dto.setName(category.getName());
-        dto.setSlug(category.getSlug());
-
-        if (category.getParent() != null) {
-            dto.setParentId(category.getParent().getId());
+    public CategoryDto createCategory(CategoryRequest request) {
+        if (categoryRepository.existsByNameIgnoreCase(request.getName())) {
+            throw new AppException(ExceptionConstant.CATEGORY_EXISTS);
         }
-
-        return dto;
+        Category category = categoryMapper.categoryToEntity(request);
+        categoryRepository.save(category);
+        return categoryMapper.categoryToDto(category);
     }
+
+    public List<CategoryDto> getAllCategories() {
+        return categoryRepository.findAll().stream()
+                .map(categoryMapper::categoryToDto)
+                .toList();
+    }
+
+    public CategoryDto getCategory(Long id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new AppException(ExceptionConstant.CATEGORY_NOT_FOUND));
+        return categoryMapper.categoryToDto(category);
+
+    }
+
+    public CategoryDto updateCategory(Long id, CategoryRequest request) {
+        Category existing = categoryRepository.findById(id)
+                .orElseThrow(() -> new AppException(ExceptionConstant.CATEGORY_NOT_FOUND));
+        if (request.getName() != null && categoryRepository.existsByNameIgnoreCaseAndIdNot(request.getName(), id)) {
+            throw new AppException(ExceptionConstant.CATEGORY_EXISTS);
+        }
+        categoryMapper.categoryUpdatedToEntity(existing, request);
+        Category category = categoryRepository.save(existing);
+        return categoryMapper.categoryToDto(category);
+
+    }
+
+    public void deleteCategory(Long id) {
+        Category category = categoryRepository.findById(id)
+                .orElseThrow(() -> new AppException(ExceptionConstant.CATEGORY_NOT_FOUND));
+        deleteRecursively(category);
+    }
+
+    private void deleteRecursively(Category category) {
+        for (Category child : category.getChildren()) {
+            deleteRecursively(child);
+        }
+        categoryRepository.delete(category);
+    }
+
 }

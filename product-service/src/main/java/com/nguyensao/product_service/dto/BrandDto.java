@@ -1,16 +1,21 @@
 package com.nguyensao.product_service.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.FieldDefaults;
 
-@Data
-@NoArgsConstructor
+@Getter
+@Setter
 @AllArgsConstructor
+@NoArgsConstructor
+@FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class BrandDto {
-    private Long id;
-    private String name;
-    private String slug;
-    private String description;
-    private String logoUrl;
+    Long id;
+    String name;
+    String slug;
+    String imageUrl;
+    int displayOrder;
+
 }

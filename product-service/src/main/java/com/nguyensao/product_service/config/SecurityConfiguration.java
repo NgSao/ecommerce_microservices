@@ -20,6 +20,8 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtAut
 import org.springframework.security.web.SecurityFilterChain;
 
 import com.nguyensao.product_service.constant.SecurityConstant;
+import com.nguyensao.product_service.security.CustomAccessDeniedHandler;
+import com.nguyensao.product_service.security.CustomAuthenticationEntryPoint;
 import com.nimbusds.jose.jwk.source.ImmutableSecret;
 import com.nimbusds.jose.util.Base64;
 
@@ -29,37 +31,23 @@ public class SecurityConfiguration {
     @Value("${jwt.secret}")
     private String jwtKey;
 
-    // @Bean
-    // public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity,
-    // CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
-    // CustomAccessDeniedHandler customAccessDeniedHandler) throws Exception {
-    // httpSecurity
-    // .csrf(c -> c.disable())
-    // .authorizeHttpRequests(auth -> auth
-    // .requestMatchers(SecurityConstant.ADMIN_URLS).hasAnyAuthority("ROLE_ADMIN",
-    // "ROLE_STAFF")
-    // .requestMatchers(SecurityConstant.PUBLIC_URLS).permitAll()
-    // .anyRequest().authenticated())
-    // .oauth2ResourceServer(oauth2 -> oauth2
-    // .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
-    // .authenticationEntryPoint(customAuthenticationEntryPoint)
-    // .accessDeniedHandler(customAccessDeniedHandler))
-    // .formLogin(f -> f.disable())
-
-    // .sessionManagement(sess ->
-    // sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
-    // return httpSecurity.build();
-    // }
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity,
+            CustomAuthenticationEntryPoint customAuthenticationEntryPoint,
+            CustomAccessDeniedHandler customAccessDeniedHandler) throws Exception {
         httpSecurity
-                .csrf(csrf -> csrf.disable())
+                .csrf(c -> c.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .anyRequest().permitAll())
-                .formLogin(form -> form.disable())
-                .httpBasic(http -> http.disable())
-                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+                        .requestMatchers(SecurityConstant.ADMIN_URLS).hasAnyAuthority("ROLE_ADMIN", "ROLE_STAFF")
+                        .requestMatchers(SecurityConstant.PUBLIC_URLS).permitAll()
+                        .anyRequest().authenticated())
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                        .accessDeniedHandler(customAccessDeniedHandler))
+                .formLogin(f -> f.disable())
 
+                .sessionManagement(sess -> sess.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         return httpSecurity.build();
     }
 

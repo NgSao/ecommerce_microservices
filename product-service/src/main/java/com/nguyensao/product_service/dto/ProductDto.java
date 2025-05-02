@@ -1,35 +1,46 @@
 package com.nguyensao.product_service.dto;
 
-import lombok.Data;
-
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
-import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 
-@Data
-@NoArgsConstructor
+import com.nguyensao.product_service.utils.CurrencyUtils;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.FieldDefaults;
+
+@Getter
+@Setter
 @AllArgsConstructor
+@NoArgsConstructor
+@FieldDefaults(level = lombok.AccessLevel.PRIVATE)
 public class ProductDto {
-    private Long id;
-    private String name;
-    private String shortDescription;
-    private String description;
-    private String sku;
-    private BigDecimal price;
-    private BigDecimal oldPrice;
-    private BigDecimal specialPrice;
-    private boolean isPublished;
-    private Long brandId;
-    private String brandName;
-    private Long parentId;
-    private Set<Long> categoryIds = new HashSet<>();
-    private List<CategoryDto> categories = new ArrayList<>();
-    private List<ProductImageDto> images = new ArrayList<>();
-    private List<AttributeValueDto> attributeValues = new ArrayList<>();
-    private List<OptionCombinationDto> optionCombinations = new ArrayList<>();
-    private List<Long> relatedProductIds = new ArrayList<>();
+    Long id;
+    String name;
+    String slug;
+    String sku;
+    String specification;
+    String description;
+    BigDecimal originalPrice;
+    BigDecimal salePrice;
+    Integer stock;
+
+    Integer sold;
+
+    Integer rating;
+    BrandDto brand;
+    Set<CategoryDto> categories = new HashSet<>();
+    Set<MediaDto> images = new HashSet<>();
+    Set<VariantDto> variants = new HashSet<>();
+
+    public String getFormattedOriginalPrice() {
+        return CurrencyUtils.formatVndCurrency(originalPrice);
+    }
+
+    public String getFormattedSalePrice() {
+        return CurrencyUtils.formatVndCurrency(salePrice);
+    }
 }

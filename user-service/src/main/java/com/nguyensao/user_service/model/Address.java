@@ -28,7 +28,7 @@ public class Address {
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
 
-    String fullname;
+    String fullName;
     String phone;
     String city;
     String district;

@@ -22,9 +22,10 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserDto {
     String id;
-    String fullname;
+    String fullName;
     String password;
     String email;
+    String phone;
     Instant birthday;
     UserGender gender;
     String profileImageUrl;

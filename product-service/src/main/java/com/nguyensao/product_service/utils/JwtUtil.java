@@ -10,9 +10,7 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class JwtUtil {
-    /**
-     * Lấy thông tin người dùng hiện tại từ Security Context.
-     */
+
     public static Optional<String> getCurrentUserLogin() {
         SecurityContext securityContext = SecurityContextHolder.getContext();
         return Optional.ofNullable(extractPrincipal(securityContext.getAuthentication()));

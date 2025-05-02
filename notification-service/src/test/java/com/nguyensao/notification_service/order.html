@@ -1,0 +1,173 @@
+<html>
+
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header {
+            background-color: #d70018;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        .order-info {
+            margin-bottom: 20px;
+        }
+
+        .order-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .order-status {
+            color: #198754;
+        }
+
+        .order-date {
+            margin: 10px 0;
+            color: #555;
+        }
+
+        .order-details {
+            margin-top: 20px;
+        }
+
+        .order-item {
+            display: flex;
+            border-bottom: 1px solid #ccc;
+            padding: 10px 0;
+        }
+
+        .product-image {
+            width: 100px;
+            height: 100px;
+            margin-right: 15px;
+        }
+
+        .item-details {
+            flex: 1;
+        }
+
+        .item-name {
+            font-weight: bold;
+        }
+
+        .order-footer {
+            margin-top: 20px;
+        }
+
+        .footer-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+
+        .total-order {
+            color: #d70018;
+            font-weight: bold;
+        }
+
+        .fotterne {
+            background-color: #d70018;
+            padding: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div style='max-width:800px;margin: auto;'>
+        <div class='header'>
+            <h1 style='color: #FFF'>MinhTuan <span style='color:#000'>Mobile</span></h1>
+        </div>
+        <div class='container'>
+            <p>Kính chào quý khách,<br>SN Mobile gửi đến quý khách hóa đơn điện tử cho đơn hàng ORDER123. Quý khách vui
+                lòng kiểm tra hóa đơn VAT bằng cách xem và tải file theo thông tin chi tiết dưới đây.</p>
+            <div style='margin-bottom: 30px;'>
+                <div style='border-bottom: 3px solid #d70018;'>
+                    <h3 style='color: #d70018;'>THÔNG TIN KHÁCH HÀNG</h3>
+                </div>
+                <p>Người nhận: <span>Nguyễn Văn A</span></p>
+                <p>Số điện thoại: <span>0123456789</span></p>
+                <p>Email: <span>nguyenvana@example.com</span></p>
+                <p>Địa chỉ nhận hàng: <span>123 Đường Láng, Hà Nội</span></p>
+                <p>Người nhận hộ: <span>Trần Thị B</span></p>
+                <p>Số điện thoại người nhận hộ: <span>0987654321</span></p>
+            </div>
+            <div class='order-info'>
+                <div style='border-bottom: 3px solid #d70018;'>
+                    <h3 style='color: #d70018;'>THÔNG TIN ĐƠN HÀNG ORDER123</h3>
+                </div>
+                <div>
+                    <div class='order-title'>
+                        <p>Ngày đặt hàng: <span>2025-04-28</span></p>
+                        <span class='order-status'>Chờ xác nhận</span>
+                    </div>
+                    <p class='estimated-delivery'>Dự kiến giao: <span>2025-05-01</span></p>
+                </div>
+                <div class='order-details'>
+                    <h3 style='color: #d70018;'>THÔNG TIN SẢN PHẨM</h3>
+                    <div class='order-item' style='display: flex; border-bottom: 1px solid #ccc; padding: 10px 0;'><img
+                            src='https://example.com/iphone14pro.jpg' alt='Sản phẩm'
+                            style='width: 100px; height: 100px; margin-right: 15px;' />
+                        <div class='item-details' style='flex: 1;'>
+                            <p style='font-weight: bold;'>iPhone 14 Pro</p>
+                            <p>Số lượng: <span>1</span></p>
+                            <p>Giá: <span>25,000,000 VNĐ</span></p>
+                        </div>
+                    </div>
+                    <div class='order-item' style='display: flex; border-bottom: 1px solid #ccc; padding: 10px 0;'><img
+                            src='https://example.com/case.jpg' alt='Sản phẩm'
+                            style='width: 100px; height: 100px; margin-right: 15px;' />
+                        <div class='item-details' style='flex: 1;'>
+                            <p style='font-weight: bold;'>Ốp lưng iPhone</p>
+                            <p>Số lượng: <span>2</span></p>
+                            <p>Giá: <span>200,000 VNĐ</span></p>
+                        </div>
+                    </div>
+                </div>
+                <div class='order-footer'>
+                    <div class='footer-item'>
+                        <p>Tổng đơn hàng:</p>
+                        <p>25,400,000 VNĐ</p>
+                    </div>
+                    <div class='footer-item'>
+                        <p>Số lượng:</p>
+                        <p>3</p>
+                    </div>
+                    <div class='footer-item'>
+                        <p>Phí vận chuyển:</p>
+                        <p>50,000 VNĐ</p>
+                    </div>
+                    <div class='footer-item'>
+                        <p>Tổng tiền đơn hàng:</p>
+                        <p class='total-order'>25,450,000 VNĐ</p>
+                    </div>
+                </div>
+            </div>
+            <div style='text-align: center; margin-top: 40px'>
+                <p>Chúc bạn luôn có những trải nghiệm tuyệt vời khi mua sắm tại SN Mobile.</p>
+                <p>Tổng đài hỗ trợ miễn phí: <span style='color:#d70018;'>0392445255</span></p>
+                <p>SN Mobile cảm ơn quý khách.</p>
+            </div>
+        </div>
+        <div class='fotterne'></div>
+    </div>
+</body>
+
+</html>

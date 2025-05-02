@@ -16,10 +16,13 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserCustomerResponse {
-    String fullname;
+    String fullName;
+    String phone;
     String email;
     String profileImageUrl;
     RoleAuthorities role;
     UserStatus status;
+    Instant birthday;
+    Instant lastLoginDate;
     Instant createdAt;
 }

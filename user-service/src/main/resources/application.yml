@@ -4,9 +4,3 @@ spring:
   application:
     name: user-service
 
-  data:
-    web:
-      pageable:
-        default-page-size: 10
-        max-page-size: 100
-        default-page-number: 0

@@ -1,25 +1,30 @@
 package com.nguyensao.user_service.security;
 
+import java.io.IOException;
+
+import org.springframework.security.oauth2.server.resource.web.BearerTokenResolver;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.nguyensao.user_service.constant.SecurityConstant;
+import com.nguyensao.user_service.dto.response.DataResponse;
+import com.nguyensao.user_service.service.TokenBlacklistService;
+
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.springframework.stereotype.Component;
-import org.springframework.util.StringUtils;
-import org.springframework.web.filter.OncePerRequestFilter;
-
-import com.nguyensao.user_service.service.TokenBlacklistService;
-
-import java.io.IOException;
-
 @Component
 public class JwtBlacklistFilter extends OncePerRequestFilter {
 
-    private final TokenBlacklistService tokenBlacklistService;
+    private final TokenBlacklistService blacklistService;
+    private final BearerTokenResolver tokenResolver;
 
-    public JwtBlacklistFilter(TokenBlacklistService tokenBlacklistService) {
-        this.tokenBlacklistService = tokenBlacklistService;
+    public JwtBlacklistFilter(TokenBlacklistService blacklistService,
+            BearerTokenResolver tokenResolver) {
+        this.blacklistService = blacklistService;
+        this.tokenResolver = tokenResolver;
     }
 
     @Override
@@ -28,22 +33,15 @@ public class JwtBlacklistFilter extends OncePerRequestFilter {
             FilterChain filterChain)
             throws ServletException, IOException {
 
-        String token = extractTokenFromRequest(request);
-
-        if (StringUtils.hasText(token) && tokenBlacklistService.isTokenBlacklisted(token)) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Token đã bị thu hồi.");
+        String token = tokenResolver.resolve(request);
+        if (token != null && blacklistService.isBlacklisted(token)) {
+            response.setContentType("application/json;charset=UTF-8");
+            DataResponse<Object> res = new DataResponse<>();
+            res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            res.setMessage(SecurityConstant.TOKEN_REVOKED);
             return;
         }
 
         filterChain.doFilter(request, response);
-    }
-
-    private String extractTokenFromRequest(HttpServletRequest request) {
-        String bearer = request.getHeader("Authorization");
-        if (StringUtils.hasText(bearer) && bearer.startsWith("Bearer ")) {
-            return bearer.substring(7);
-        }
-        return null;
     }
 }

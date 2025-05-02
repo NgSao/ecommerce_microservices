@@ -13,19 +13,14 @@ public class CorsConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        // Cho phép các URL nào được truy cập API
         configuration.setAllowedOrigins(Arrays.asList("http://localhost:8081"));
 
-        // Cho phép các method nào được truy cập API
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE"));
 
-        // Cho phép các header nào được truy cập API
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Cache-Control", "Content-Type"));
 
-        // Cho phép sử dụng cookie
         configuration.setAllowCredentials(true);
 
-        // Thời gian mà preflight request được lưu trong cache
         configuration.setMaxAge(3600L);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
